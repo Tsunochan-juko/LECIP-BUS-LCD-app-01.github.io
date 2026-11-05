@@ -4,9 +4,9 @@
 Usage:
     python gtfs_to_unchin_csv.py hokkaido_chuo.zip -o converted --fare 240
 
-GTFS fields that are not represented by the simulator (stop coordinates,
-times, calendar exceptions, and fare zones) are intentionally not copied.
-The simulator's six ticket-fare cells receive a flat route fare.
+Coordinates and zone-based boarding fares are exported.
+Column 19 stores the complete ticket-fare list as JSON; columns 4-9 retain
+the first six fares for compatibility. Ticket numbers are inferred from zones.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from typing import Iterable
 
 HEADER = [
     "停留場１", "停留場２", "Bus_stop", "1", "2", "3", "4", "5", "6",
-    "広告", "始発", "空1", "空1", "空1", "放送", "停留場番号", "緯度", "経度",
+    "広告", "始発", "空1", "空1", "空1", "放送", "停留場番号", "緯度", "経度", "整理券運賃JSON",
 ]
 FARE_COLUMNS = (3, 4, 5, 6, 7, 8)
 
@@ -92,6 +92,69 @@ def parse_route_fares(
     if len(prices) == 1:
         return prices.pop()
     return default_fare
+
+
+
+class ZoneFares:
+    """Resolve OD rules with route-specific overrides and contains-zone conditions."""
+    def __init__(self, attributes, rules):
+        self.prices = {}
+        for row in attributes:
+            try:
+                if row.get("currency_type") == "JPY":
+                    self.prices[row["fare_id"]] = round(float(row["price"]))
+            except (KeyError, ValueError):
+                pass
+        self.od = defaultdict(set)
+        self.contains = defaultdict(set)
+        self.contains_routes = defaultdict(set)
+        self.has_data = bool(rules)
+        for row in rules:
+            fid = row.get("fare_id", "")
+            if fid not in self.prices:
+                continue
+            rid = row.get("route_id", "")
+            if row.get("contains_id"):
+                self.contains[fid].add(row["contains_id"])
+                self.contains_routes[fid].add(rid)
+            else:
+                self.od[(rid, row.get("origin_id", ""), row.get("destination_id", ""))].add(fid)
+
+    def price(self, route, origin, destination, visited):
+        candidates = set()
+        for rid in (route, ""):
+            matches = set()
+            for a, b in ((origin, destination), (origin, ""), ("", destination), ("", "")):
+                matches.update(self.od.get((rid, a, b), ()))
+            for fid, zones in self.contains.items():
+                if rid in self.contains_routes[fid] and zones.issubset(visited):
+                    matches.add(fid)
+            if matches:
+                candidates = matches
+                break
+        prices = {self.prices[fid] for fid in candidates}
+        return next(iter(prices)) if len(prices) == 1 else None
+
+    def apply(self, rows, ordered_ids, stops, route, default_fare):
+        valid = [sid for sid in ordered_ids if sid in stops]
+        zones = [stops[sid].get("zone_id", "") for sid in valid]
+        starts = []
+        for index, row in enumerate(rows[1:-1]):
+            zone = zones[index]
+            if index == 0 or zone != zones[index - 1]:
+                starts.append(index)
+            entries = []
+            # A boarding group becomes relevant after leaving its first stop.
+            for number, start in enumerate(starts, 1):
+                if start >= index and index > 0:
+                    continue
+                value = self.price(route, zones[start], zone, set(zones[start:index + 1]))
+                if value is None:
+                    value = default_fare if not self.has_data else ""
+                entries.append({"number": number, "fare": value})
+            row[3:9] = [str(e["fare"]) for e in entries[:6]] + [""] * max(0, 6 - len(entries))
+            row.append(json.dumps(entries, ensure_ascii=False, separators=(",", ":")))
+        rows[-1].append("")
 
 
 def make_csv_rows(
@@ -180,6 +243,7 @@ def convert(
                 times_by_trip[row["trip_id"]].append(row)
         fare_attributes = read_gtfs_table(archive, "fare_attributes.txt")
         fare_rules = read_gtfs_table(archive, "fare_rules.txt")
+        zone_fares = ZoneFares(fare_attributes, fare_rules)
 
         # Collapse service variants with the same ordered stops and destination.
         patterns: dict[tuple[str, str, tuple[str, ...], str], dict[str, str]] = {}
@@ -213,6 +277,7 @@ def convert(
             )
             if not rows:
                 continue
+            zone_fares.apply(rows, _stop_ids, stops, route_id, default_fare)
             counts_by_route[route_id] += 1
             number = counts_by_route[route_id]
             route_system = rows[-1][14] or route.get("route_short_name") or route.get("route_long_name") or route_id or "route"
@@ -254,6 +319,7 @@ def write_route_manifest(routes_dir: Path) -> None:
     previous_file = routes_dir / "index.json"
     previous_entries = json.loads(previous_file.read_text(encoding="utf-8")).get("routes", []) if previous_file.exists() else []
     previous_names = {entry["path"]: entry.get("name", "") for entry in previous_entries}
+    previous_by_path = {entry["path"]: entry for entry in previous_entries}
     for csv_path in sorted(routes_dir.rglob("*.csv")):
         relative = csv_path.relative_to(routes_dir).as_posix()
         parent = csv_path.parent.relative_to(routes_dir).as_posix()
@@ -272,7 +338,12 @@ def write_route_manifest(routes_dir: Path) -> None:
         previous_name = previous_names.get(relative, "")
         company = previous_name.split(" / ")[0] if " / " in previous_name else (parent if parent != "." else "")
         route_name = f"{company} / {label}" if company else label
-        entries.append({"name": route_name, "path": relative})
+        if relative.startswith("archive/"):
+            entry = dict(previous_by_path.get(relative, {}))
+            entry.update({"name": entry.get("name", route_name), "path": relative, "category": "archive"})
+            entries.append(entry)
+        else:
+            entries.append({"name": route_name, "path": relative})
     manifest = {"routes": entries}
     (routes_dir / "index.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
@@ -296,7 +367,7 @@ def main() -> int:
         print(f"変換できませんでした: {error}", file=sys.stderr)
         return 1
     print(f"{count} 個の路線パターンを {args.output.resolve()} に出力しました")
-    print("停留所緯度・経度をCSV末尾の列に出力しました。時刻表・ゾーン運賃は既存CSV形式に含まれません。")
+    print("停留所座標と区間運賃を出力しました。整理券番号はゾーン順の推定です。運賃データがある場合、特定できない区間は空欄になります。")
     return 0
 
 
