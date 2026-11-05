@@ -521,7 +521,7 @@
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');
       const groups = {};
-      for (const [key, label] of [['current', '現行路線'], ['archive', '過去路線アーカイブ']]) {
+      for (const [key, label] of [['current', '現行路線'], ['recorded', '録音放送付き路線'], ['archive', '過去路線アーカイブ']]) {
         const group = document.createElement('optgroup');
         group.label = label; select.appendChild(group); groups[key] = group;
       }
@@ -530,7 +530,7 @@
         if (![...select.options].some(option => option.value === entry.name)) {
           const option = document.createElement('option');
           option.value = entry.name; option.textContent = phoneRouteLabel(entry.name);
-          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : 'current'].appendChild(option);
+          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : entry.category === 'recorded' || entry.path.startsWith('recorded/') ? 'recorded' : 'current'].appendChild(option);
         }
       }
       const firstRoute = (manifest.routes || [])[0];
@@ -566,14 +566,11 @@
   });
 
   // 描画更新処理
-  let lastFareKey = '';
-  let farePageStartedAt = Date.now();
   function renderFareGrid(currentData) {
     const grid = document.getElementById('fare-grid');
     grid.innerHTML = '';
     let entries = null;
     try { const parsed = JSON.parse(currentData[18] || 'null'); if (Array.isArray(parsed) && parsed.length) entries = parsed; } catch {}
-    const page = entries ? Math.floor((Date.now() - farePageStartedAt) / 4000) % Math.ceil(entries.length / 6) : 0;
     let counter = 1, fareCount = 0; 
     for (let i3 = 0; i3 < 2; i3++) {
       for (let i2 = 0; i2 < 3; i2++) {
@@ -582,8 +579,7 @@
         cell.style.left = `calc(${3 + i2 * 198} / ${baseW} * 100%)`;
         cell.style.top = `calc(${96 + i3 * 96.5} / ${baseH} * 100%)`;
         
-        const entry = entries?.[page * 6 + fareCount];
-        if (entries) counter = entry?.number ?? '';
+        const entry = entries?.[fareCount];
         let val = entries ? (entry?.fare ?? '') : (currentData[3 + fareCount] || "");
         if (entries && val === '' && entry) val = '―'; 
         if ((!entries || entry?.number === 1) && fareCount === 0 && val !== "") {
@@ -596,11 +592,6 @@
     }
 
   }
-  setInterval(() => {
-    const row = rosenList[selectedValue]?.[mawashi + 1];
-    if (row?.[18]) renderFareGrid(row);
-  }, 1000);
-
   function updateDisplay() {
     if (!selectedValue || !rosenList[selectedValue]) return;
     const data = rosenList[selectedValue];
@@ -644,8 +635,6 @@
     document.getElementById('scroll-txt').textContent = currentData[9] || "";
     idou = baseW; 
 
-    const fareKey = selectedValue + ':' + mawashi;
-    if (fareKey !== lastFareKey) { lastFareKey = fareKey; farePageStartedAt = Date.now(); }
     renderFareGrid(currentData);
 
     document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 

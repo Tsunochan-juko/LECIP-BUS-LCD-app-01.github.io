@@ -363,13 +363,7 @@
       const played=await playAdvanceChime();
       if (!played || generation!==announcementGeneration) return;
       if (currentData[14] && terminalData[14]) {
-        const audio = playSound(`sound_file/${terminalData[14]}/${currentData[14]}`);
-        currentAnnounceAudio = audio;
-        audio.addEventListener('error', () => {
-          if (generation !== announcementGeneration || currentAnnounceAudio !== audio) return;
-          currentAnnounceAudio = null;
-          speakStopAnnouncement(name, text);
-        }, { once: true });
+        await playRecordedAnnouncement(`sound_file/${terminalData[14]}/${currentData[14]}`, generation, name, text);
       }
       else speakStopAnnouncement(name,text);
     } finally { advanceAnnouncementPending--; }
@@ -697,6 +691,44 @@
     limiter.threshold.value=-3;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.003;limiter.release.value=.15;
     source.connect(gain);gain.connect(limiter);limiter.connect(displayAudioContext.destination);
   }
+  const recordedAnnouncementBuffers = new Map();
+  async function playRecordedAnnouncement(path, generation, name, text) {
+    const context = displayAudioContext;
+    if (!context || context.state !== 'running') { showAudioRetry(); return; }
+    let source = null;
+    // Retain the playback state used by the stop-request queue and cancel controls.
+    const playback = {
+      paused: false, ended: false, currentTime: 0,
+      pause() { this.paused = true; if (source) { try { source.stop(); } catch {} } }
+    };
+    currentAnnounceAudio = playback;
+    try {
+      let buffer = recordedAnnouncementBuffers.get(path);
+      if (!buffer) {
+        const response = await fetch(path);
+        if (!response.ok) throw new Error('録音ファイルを取得できません: ' + response.status);
+        buffer = await context.decodeAudioData(await response.arrayBuffer());
+        // Bound memory usage: recordings can be several megabytes each.
+        if (recordedAnnouncementBuffers.size >= 3) recordedAnnouncementBuffers.delete(recordedAnnouncementBuffers.keys().next().value);
+        recordedAnnouncementBuffers.set(path, buffer);
+      }
+      if (generation !== announcementGeneration || playback.paused) return;
+      await new Promise(resolve => {
+        source = context.createBufferSource(); source.buffer = buffer;
+        connectAnnouncementAudio(source);
+        source.onended = () => { playback.ended = true; resolve(); };
+        source.start();
+      });
+    } catch (error) {
+      playback.ended = true;
+      if (generation !== announcementGeneration || playback.paused) return;
+      const button = document.getElementById('audio-retry');
+      button.textContent = '録音放送エラー: ' + error.message;
+      showAudioRetry();
+      console.error(path, error);
+      speakStopAnnouncement(name, text);
+    }
+  }
   function playSound(path) {
     const audio = new Audio(path);
     if(displayAudioContext?.state==='running' && (path.startsWith('sound_file/') || /door_close_|tugitomarimasu_/.test(path))) {
@@ -833,14 +865,11 @@
   });
 
   // 描画更新処理
-  let lastFareKey = '';
-  let farePageStartedAt = Date.now();
   function renderFareGrid(currentData) {
     const grid = document.getElementById('fare-grid');
     grid.innerHTML = '';
     let entries = null;
     try { const parsed = JSON.parse(currentData[18] || 'null'); if (Array.isArray(parsed) && parsed.length) entries = parsed; } catch {}
-    const page = entries ? Math.floor((Date.now() - farePageStartedAt) / 4000) % Math.ceil(entries.length / 6) : 0;
     let counter = 1, fareCount = 0; 
     for (let i3 = 0; i3 < 2; i3++) {
       for (let i2 = 0; i2 < 3; i2++) {
@@ -849,8 +878,7 @@
         cell.style.left = `calc(${3 + i2 * 198} / ${baseW} * 100%)`;
         cell.style.top = `calc(${96 + i3 * 96.5} / ${baseH} * 100%)`;
         
-        const entry = entries?.[page * 6 + fareCount];
-        if (entries) counter = entry?.number ?? '';
+        const entry = entries?.[fareCount];
         let val = entries ? (entry?.fare ?? '') : (currentData[3 + fareCount] || "");
         if (entries && val === '' && entry) val = '―'; 
         if ((!entries || entry?.number === 1) && fareCount === 0 && val !== "") {
@@ -863,11 +891,6 @@
     }
 
   }
-  setInterval(() => {
-    const row = rosenList[selectedValue]?.[mawashi + 1];
-    if (row?.[18]) renderFareGrid(row);
-  }, 1000);
-
   function updateDisplay() {
     if (!selectedValue || !rosenList[selectedValue]) return;
     const data = rosenList[selectedValue];
@@ -910,8 +933,6 @@
     document.getElementById('scroll-txt').textContent = currentData[9] || "";
     idou = baseW; 
 
-    const fareKey = selectedValue + ':' + mawashi;
-    if (fareKey !== lastFareKey) { lastFareKey = fareKey; farePageStartedAt = Date.now(); }
     renderFareGrid(currentData);
 
     document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 

@@ -6,7 +6,7 @@ Usage:
 
 Coordinates and zone-based boarding fares are exported.
 Column 19 stores the complete ticket-fare list as JSON; columns 4-9 retain
-the first six fares for compatibility. Ticket numbers are inferred from zones.
+the first six fares for compatibility. Ticket numbers group adjacent boarding stops with identical future fares.
 """
 
 from __future__ import annotations
@@ -138,23 +138,33 @@ class ZoneFares:
     def apply(self, rows, ordered_ids, stops, route, default_fare):
         valid = [sid for sid in ordered_ids if sid in stops]
         zones = [stops[sid].get("zone_id", "") for sid in valid]
-        starts = []
-        for index, row in enumerate(rows[1:-1]):
-            zone = zones[index]
-            if index == 0 or zone != zones[index - 1]:
+        count = len(zones)
+        # Compare fares to every remaining destination. Adjacent boarding stops
+        # share a ticket only when all their remaining destination fares agree.
+        fares = [[None] * count for _ in zones]
+        for origin in range(count):
+            visited = set()
+            for destination in range(origin, count):
+                visited.add(zones[destination])
+                value = self.price(route, zones[origin], zones[destination], visited)
+                if value is None and not self.has_data:
+                    value = default_fare
+                fares[origin][destination] = value
+        starts = [0] if count else []
+        for index in range(1, count - 1):
+            if fares[starts[-1]][index + 1:] != fares[index][index + 1:]:
                 starts.append(index)
+        for index, row in enumerate(rows[1:-1]):
             entries = []
-            # A boarding group becomes relevant after leaving its first stop.
             for number, start in enumerate(starts, 1):
                 if start >= index and index > 0:
-                    continue
-                value = self.price(route, zones[start], zone, set(zones[start:index + 1]))
-                if value is None:
-                    value = default_fare if not self.has_data else ""
-                entries.append({"number": number, "fare": value})
+                    break
+                value = fares[start][index]
+                entries.append({"number": number, "fare": value if value is not None else ""})
             row[3:9] = [str(e["fare"]) for e in entries[:6]] + [""] * max(0, 6 - len(entries))
             row.append(json.dumps(entries, ensure_ascii=False, separators=(",", ":")))
         rows[-1].append("")
+
 
 
 def make_csv_rows(
@@ -340,9 +350,9 @@ def write_route_manifest(routes_dir: Path) -> None:
         previous_name = previous_names.get(relative, "")
         company = previous_name.split(" / ")[0] if " / " in previous_name else (parent if parent != "." else "")
         route_name = f"{company} / {label}" if company else label
-        if relative.startswith("archive/"):
+        if relative.startswith(("archive/", "recorded/")):
             entry = dict(previous_by_path.get(relative, {}))
-            entry.update({"name": entry.get("name", route_name), "path": relative, "category": "archive"})
+            entry.update({"name": entry.get("name", route_name), "path": relative, "category": "archive" if relative.startswith("archive/") else "recorded"})
             entries.append(entry)
         else:
             entries.append({"name": route_name, "path": relative})
@@ -369,7 +379,7 @@ def main() -> int:
         print(f"変換できませんでした: {error}", file=sys.stderr)
         return 1
     print(f"{count} 個の路線パターンを {args.output.resolve()} に出力しました")
-    print("停留所座標と区間運賃を出力しました。整理券番号はゾーン順の推定です。運賃データがある場合、特定できない区間は空欄になります。")
+    print("停留所座標と区間運賃を出力しました。整理券番号は運賃推移からまとめた推定区分です。運賃データがある場合、特定できない区間は空欄になります。")
     return 0
 
 
