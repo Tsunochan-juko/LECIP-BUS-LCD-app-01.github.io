@@ -1,0 +1,13 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "privateBus": {
+      "state": {
+        ".read": "auth != null && auth.uid === 'hotate'",
+        ".write": "auth != null && auth.uid === 'yuta44283'",
+        ".validate": "newData.hasChildren(['state', 'writerClientId'])"
+      }
+    }
+  }
+}

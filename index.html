@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>バス運賃表示器シミュレーター</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #101619; color: #f4f3ed; font-family: system-ui, sans-serif; }
+    main { width: min(100%, 560px); padding: 32px; border: 1px solid #56646a; border-radius: 18px; background: #1b2428; }
+    h1 { margin: 0 0 10px; font-size: clamp(25px, 6vw, 36px); }
+    p { color: #c8d0d1; line-height: 1.6; }
+    nav { display: grid; gap: 14px; margin-top: 26px; }
+    a { display: block; padding: 18px 20px; border-radius: 12px; color: #101619; background: #e6c55c; font-size: 20px; font-weight: 700; text-decoration: none; }
+    a:hover { background: #f2d97d; }
+    a span { display: block; padding-top: 4px; font-size: 14px; font-weight: 500; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>バス運賃表示器</h1>
+    <p>使う端末に合わせて画面を選んでください。iPhoneとiPadは同じFirebaseアカウントでログインします。</p>
+    <nav>
+      <a href="iphone.html">iPhone 操作画面<span>路線選択・ボタン操作・GPS自動進行</span></a>
+      <a href="ipad.html">iPad 表示画面<span>運賃表示器の描画・車内放送・読み上げ音声</span></a>
+    </nav>
+    <p style="font-size:14px">Safariで各画面を開き、共有 →「ホーム画面に追加」でアプリとして保存できます。追加したアイコンから開いて最初にログインすると、次回からログイン状態を復元します。</p>
+  </main>
+</body>
+</html>

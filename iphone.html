@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>バス運賃表示器・iPhone操作</title>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --base-w: 598;
+    --base-h: 336;
+    --pt-ratio: 1.333; /* TkinterのptをWebのpxに合わせる補正 */
+  }
+  
+  body { background-color: #222; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; font-family: sans-serif; }
+
+  /* =========================================
+     ディスプレイ画面 (dp)
+  ========================================= */
+  #dp-screen {
+    width: 100%; max-width: 800px; aspect-ratio: var(--base-w) / var(--base-h); background-color: #080302; position: relative; overflow: hidden; container-type: inline-size; font-family: 'BIZ UDPGothic', sans-serif; color: #ffffff; user-select: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #000;
+  }
+
+  .abs { position: absolute; }
+  .flex-center { display: flex; justify-content: center; align-items: center; }
+  
+  /* 画面切り替え */
+  .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; }
+  .screen.active { opacity: 1; visibility: visible; z-index: 10; }
+  
+  /* 割り込み画像画面 */
+  .interrupt-screen { position: absolute; top: 0; left: 0; width: 100%; height: calc(290 / var(--base-h) * 100%); opacity: 0; visibility: hidden; z-index: 20; }
+  .interrupt-screen.active { opacity: 1; visibility: visible; }
+  .full-img { width: 100%; height: 100%; object-fit: fill; }
+
+  /* Screen 1 */
+  .sc1-blue-bg { top: calc(76 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(214 / var(--base-h) * 100%); background-color: #497BA4; }
+  .next-box { top: 0; left: 0; width: calc(33 / var(--base-w) * 100%); height: calc(70 / var(--base-h) * 100%); background-color: #497BA4; font-size: calc(19 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; text-align: center; line-height: 1; white-space: pre-wrap; }
+  .next-box-border { top: calc(70 / var(--base-h) * 100%); left: 0; width: calc(33 / var(--base-w) * 100%); height: calc(3 / var(--base-h) * 100%); background-color: #DFD65C; }
+  .main-dest { top: calc(38 / var(--base-h) * 100%); left: calc(315 / var(--base-w) * 100%); transform: translate(-50%, -50%); font-size: calc(35 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .child-half-txt { top: calc(86 / var(--base-h) * 100%); left: calc(100 / var(--base-w) * 100%); transform: translateY(-50%); font-size: calc(10 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; }
+  .label-ticket { top: calc(78 / var(--base-h) * 100%); left: calc(3 / var(--base-w) * 100%); width: calc(46 / var(--base-w) * 100%); height: calc(16 / var(--base-h) * 100%); background-color: #080302; font-size: calc(9 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .label-fare { top: calc(78 / var(--base-h) * 100%); left: calc(51 / var(--base-w) * 100%); width: calc(46 / var(--base-w) * 100%); height: calc(16 / var(--base-h) * 100%); background-color: #080302; color: #D8A533; font-size: calc(9 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .fare-cell { width: calc(196 / var(--base-w) * 100%); height: calc(95 / var(--base-h) * 100%); }
+  .cell-top { top: 0; left: 0; width: 100%; height: calc(35 / 95 * 100%); background-color: #082345; }
+  .cell-bottom { top: calc(35 / 95 * 100%); left: 0; width: 100%; height: calc(60 / 95 * 100%); background-color: #080302; }
+  .cell-no { font-size: calc(24 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .cell-val { font-size: calc(32 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; color: #D8A533; line-height: 1; }
+
+  /* Screen 2 & 3 共通・専用デザイン */
+  .top-bar-blue { top: 0; left: 0; width: 100%; height: calc(36 / var(--base-h) * 100%); background-color: #497BA4; }
+  .top-bar-text { top: calc(18 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(16 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .yellow-bar { left: 0; width: 100%; height: calc(3 / var(--base-h) * 100%); background-color: #DFD65C; }
+  .gray-bar { top: calc(287 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(3 / var(--base-h) * 100%); background-color: #778A8C; }
+  
+  .sc2-black-bottom { top: calc(203 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(84 / var(--base-h) * 100%); background-color: #101010; }
+  .sc2-next-stop-ja { top: calc(140 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(35 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .sc2-next-stop-en { top: calc(245 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(18 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #A2B8B8; line-height: 1; white-space: nowrap; }
+
+  /* Screen 3 */
+  .sc3-bg-img { top: calc(36 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(290 / var(--base-h) * 100%); object-fit: fill; clip-path: inset(0 0 calc(36 / 290 * 100%) 0); }
+  /* Tkinterのanchor="nw"と同じ挙動にするため、余計なmarginを消して純粋に座標配置 */
+  .sc3-via-ja { left: calc(125 / var(--base-w) * 100%); font-size: calc(17 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-via-en { left: calc(125 / var(--base-w) * 100%); font-size: calc(11 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #ffffff; line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-dest-ja { left: calc(125 / var(--base-w) * 100%); font-size: calc(20 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-dest-en { left: calc(125 / var(--base-w) * 100%); font-size: calc(13 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #ffffff; line-height: 1; white-space: nowrap; transform-origin: top left; }
+
+  /* スクロールエリア */
+  .scroll-area { top: calc(291 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(45 / var(--base-h) * 100%); background-color: #080302; overflow: hidden; z-index: 100; }
+  .scroll-txt { top: 50%; transform: translateY(-50%); white-space: nowrap; color: #D8A533; font-size: calc(30 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; }
+
+  /* 操作パネル */
+  #controller { width: 100%; max-width: 800px; margin-top: 30px; background-color: #e0e0e0; padding: 20px; border-radius: 8px; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel-section { background: #fff; padding: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .panel-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+  .setting-group { margin-bottom: 15px; }
+  .setting-group label { display: block; font-size: 14px; margin-bottom: 5px; font-weight: bold;}
+  .radio-group { display: flex; flex-direction: column; gap: 5px; font-size: 14px; margin-bottom: 10px;}
+  .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+  button { padding: 10px; font-size: 18px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+  button:active { transform: translateY(3px); box-shadow: none; }
+  button:disabled { background-color: #999 !important; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-next { background-color: #db3131; color: white; grid-column: span 2; height: 60px; font-size: 24px;}
+  .btn-back { background-color: #222222; color: white; height: 60px;}
+  .btn-door { background-color: #222222; color: white; height: 60px; font-size: 24px; }
+  .btn-reset { background-color: #222222; color: white; font-size: 14px; }
+  .stop-button { background-color: #DACD27; border: 2px solid #fff; border-radius: 8px; padding: 10px; margin-bottom: 15px; cursor: pointer; text-align: center; box-shadow: inset 0 0 0 5px #120109; transition: 0.2s; }
+  .stop-button-text { background-color: #211117; color: #211117; border-radius: 4px; padding: 10px; font-family: 'MS UI Gothic', sans-serif; font-size: 24px; font-weight: bold; text-shadow: 0 0 5px rgba(228, 110, 121, 0); }
+  .stop-button.pushed .stop-button-text { color: #e46e79; text-shadow: 0 0 10px #e46e79; }
+  .file-input { display: block; width: 100%; border: 2px dashed #497BA4; padding: 10px; box-sizing: border-box; background: #f9f9f9; cursor: pointer; }
+  #connection-bar { width: 100%; max-width: 800px; margin-bottom: 14px; padding: 12px 16px; background: #f4f4f4; border-radius: 8px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+  #connection-bar input { width: 180px; padding: 8px; font-size: 16px; }
+  #connection-status { flex: 1 1 100%; font-size: 14px; color: #333; }
+  .role-tag { font-weight: bold; padding: 7px 10px; background: #dceafa; border-radius: 4px; }
+  #connection-bar button { padding: 8px 12px; font-size: 14px; }
+  body.mode-display { padding: 12px; }
+  body.mode-display #controller { display: none; }
+  body.mode-display #dp-screen { max-width: min(100%, 1200px); }
+  body.mode-controller #dp-screen { display: none; }
+  body.mode-controller #controller { max-width: 800px; margin-top: 0; }
+  @media (max-width: 600px) { #controller { grid-template-columns: 1fr; padding: 12px; gap: 12px; } .panel-section { padding: 12px; } }
+
+  :root { --primary:#2563eb; --border:#e2e8f0; --surface:#fff; --bg-main:#f8fafc; --text-main:#1e293b; --text-muted:#64748b; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body.mode-controller { height:100dvh; min-height:0; width:100%; margin:0; padding:0; overflow:hidden; background:var(--bg-main); color:var(--text-main); font-family:"Helvetica Neue",Arial,"BIZ UDPGothic",sans-serif; }
+  #map-area { height:50%; flex:0 0 50%; width:100%; position:relative; background:#e2e8f0; }
+  #map { height:100%; width:100%; }
+  .map-caption { position:absolute; top:calc(8px + env(safe-area-inset-top)); left:116px; right:8px; z-index:500; background:rgba(255,255,255,.95); border:1px solid var(--border); border-radius:6px; padding:7px 10px; font-size:12px; pointer-events:none; }
+  body.mode-controller #controller { width:100%; max-width:none; height:50%; flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; margin:0; border-radius:0; border-top:1px solid var(--border); padding:8px 8px calc(12px + env(safe-area-inset-bottom)); background:var(--surface); display:flex; flex-direction:column; gap:8px; }
+  .panel-section { padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--surface); box-shadow:none; }
+  .panel-section h3 { font-size:13px; border:0; margin:0 0 8px; }
+  .driver-bar { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:600; }
+  button { color:var(--text-main); background:#fff; border:1px solid var(--border); border-radius:6px; box-shadow:none; padding:9px 12px; font-size:14px; }
+  button:active { transform:none; background:#f1f5f9; }
+  button:disabled { opacity:.35; background:#f1f5f9!important; }
+  .button-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; margin:8px 0 0; }
+  .button-grid button { height:60px; font-size:22px; grid-column:auto; }
+  .button-grid .btn-next { background:var(--primary); color:#fff; }
+  .button-grid .btn-reset { height:40px; font-size:13px; grid-column:span 4; }
+  #stop-indicator { position:absolute; top:calc(8px + env(safe-area-inset-top)); left:8px; z-index:500; width:96px; pointer-events:none; }
+  #stop-indicator img { display:block; width:100%; height:auto; filter:grayscale(1) brightness(.35); }
+  #stop-indicator.pushed img { filter:none; }
+  .setting-group { margin:8px 0; }
+  .setting-group label { font-size:13px; }
+  select,input { font:inherit; font-size:16px; border:1px solid var(--border); border-radius:6px; padding:9px; background:#fff; color:var(--text-main); }
+  #rosen-select { width:100%; }
+  .settings-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .radio-group { flex:1; min-width:120px; font-size:13px; gap:6px; }
+  .muted,small { color:var(--text-muted); font-size:12px; line-height:1.5; }
+  #connection-bar { display:none; position:fixed; inset:0; z-index:2000; width:100%; max-width:none; margin:0; padding:20px; border-radius:0; background:rgba(15,23,42,.55); align-items:center; justify-content:center; }
+  body.auth-required #connection-bar { display:flex; }
+  .login-card { width:min(100%,360px); padding:24px; background:white; border-radius:12px; box-shadow:0 20px 60px #0f172a33; }
+  .login-card h2 { margin:0 0 20px; font-size:20px; }
+  .login-card label { display:block; margin:12px 0 6px; font-size:13px; }
+  #connection-bar input { width:100%; }
+  .login-card button { width:100%; margin-top:16px; color:#fff; background:var(--primary); }
+  #connection-status { font-size:12px; margin-top:12px; overflow-wrap:anywhere; }
+  .stop-marker { background:#fff; border:2px solid #2563eb; border-radius:50%; text-align:center; color:#1d4ed8; font-size:10px; font-weight:bold; line-height:18px; }
+  .stop-marker.passed { background:#2563eb; color:white; }
+  .stop-marker.target { border-color:#ef4444; color:#ef4444; }
+
+  #lcd-blackout { position:absolute; inset:0; z-index:1000; background:#000; pointer-events:none; }
+</style>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<script src="vendor/leaflet/leaflet.js"></script>
+<link rel="manifest" href="iphone.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="app-icons/bus-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="操作盤">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563eb">
+</head>
+<body data-mode="controller" class="auth-required">
+
+<div id="connection-bar" role="dialog" aria-modal="true" aria-labelledby="login-title"><section class="login-card">
+  <h2 id="login-title">運賃表示器にログイン</h2>
+  <label for="login-email">ユーザーID</label><input id="login-email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
+  <label for="login-password">パスワード</label><input id="login-password" type="password" autocomplete="current-password">
+  <button id="login-button">ログイン</button><button id="login-close" type="button" hidden>閉じる</button><button id="logout-button" hidden>ログアウト</button>
+  <div id="connection-status" role="status">Firebaseに接続中…</div>
+</section></div>
+<section id="map-area" aria-label="運行路線の地図"><div id="map"></div><div id="stop-indicator" role="status" aria-label="停車要求なし"><img src="data/stop.png" alt="停車"></div><div class="map-caption" id="map-caption" role="status">路線を読み込み中…</div></section>
+<div id="dp-screen">
+  <div id="lcd-blackout" hidden aria-hidden="true"></div>
+  <div id="screen1" class="screen active">
+    <div class="abs sc1-blue-bg"></div>
+    <div class="abs flex-center next-box" id="next-box-text">次<br>は</div>
+    <div class="abs next-box-border"></div>
+    <div class="abs main-dest" id="main-dest-text">-- 終点 --</div>
+    <div class="abs child-half-txt">小児半額(但し端数は１０円単位に切り上げ)</div>
+    <div class="abs flex-center label-ticket">整理券</div>
+    <div class="abs flex-center label-fare">運 賃</div>
+    <div id="fare-grid"></div>
+  </div>
+
+  <div id="screen2" class="screen">
+    <div class="abs top-bar-blue"></div>
+    <div class="abs top-bar-text">次 は ｜ NEXT</div>
+    <div class="abs yellow-bar" style="top: calc(200 / var(--base-h) * 100%);"></div>
+    <div class="abs sc2-black-bottom"></div>
+    <div class="abs gray-bar"></div>
+    <div class="abs sc2-next-stop-ja" id="sc2-next-stop-ja">-- 次の停留所 --</div>
+    <div class="abs sc2-next-stop-en" id="sc2-next-stop-en">-- Next Stop --</div>
+  </div>
+
+  <div id="screen3" class="screen">
+    <div class="abs top-bar-blue"></div>
+    <div class="abs top-bar-text">経由地 ｜ VIA</div>
+    <img src="data/screen3.png" class="abs sc3-bg-img" alt="" onerror="this.style.display='none'">
+    
+    <div class="abs sc3-via-ja" id="sc3-ja-0" style="top: calc(73 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-0" style="top: calc(101 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-ja" id="sc3-ja-1" style="top: calc(124.5 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-1" style="top: calc(152.5 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-ja" id="sc3-ja-2" style="top: calc(176 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-2" style="top: calc(204 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-dest-ja" id="sc3-ja-3" style="top: calc(228 / var(--base-h) * 100%);">-- 終点 --</div>
+    <div class="abs sc3-dest-en" id="sc3-en-3" style="top: calc(262 / var(--base-h) * 100%);">-- Destination --</div>
+    <div class="abs yellow-bar" style="top: calc(256 / var(--base-h) * 100%);"></div>
+    <div class="abs gray-bar"></div>
+  </div>
+
+  <div id="screen-ns1" class="interrupt-screen"><img src="data/nextstop_1.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#080302'"></div>
+  <div id="screen-ns2" class="interrupt-screen"><img src="data/nextstop_2.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#111'"></div>
+  <div id="screen-d1" class="interrupt-screen"><img src="data/depart_1.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#080302'"></div>
+  <div id="screen-d2" class="interrupt-screen"><img src="data/depart_2.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#111'"></div>
+
+  <div class="abs scroll-area">
+    <div class="abs scroll-txt" id="scroll-txt">CSVファイルを選択してください</div>
+  </div>
+</div>
+
+<main id="controller">
+ <section class="panel-section">
+  <div class="driver-bar"><span>操作パネル · <span id="mawashi-display">0</span></span><button id="account-button">アカウント</button></div>
+  <div class="setting-group"><label for="rosen-select">運行系統</label><select id="rosen-select"><option value="">路線を選択</option></select></div>
+  <div class="driver-bar"><strong id="current-stop-label">路線を選択してください</strong><span id="progress-label" class="muted"></span></div>
+  <div class="button-grid"><button class="btn-back" id="btn-back" disabled>戻</button><button class="btn-next" id="btn-next" disabled>次</button><button id="btn-open">開</button><button id="btn-close" disabled>閉</button><button class="btn-reset" id="btn-reset">リセット</button></div>
+  
+ </section>
+ <section class="panel-section"><h3>GPS・運行モード</h3>
+  <div class="settings-row"><button id="gps-start">GPS開始</button><button id="gps-stop">GPS停止</button><button id="map-fit">路線全体</button></div>
+  <div class="setting-group"><label><input id="gps-auto" type="checkbox"> 停留所を出発したら自動放送（OFFで手動送り）</label></div>
+  <div class="settings-row"><label>検知半径 <input type="number" id="gps-radius" value="45" min="10" max="300" style="width:75px"> m</label><label><input id="map-follow" type="checkbox" checked> 現在地を追従</label></div>
+  <small id="gps-status" role="status">GPS停止中。位置取得中も手動送りに切り替えられます。</small>
+ </section>
+ <section class="panel-section"><h3>音源設定 · 再生はiPad</h3><div class="settings-row"><div class="radio-group"><strong>押ボタン音源</strong><label><input type="radio" name="push_sound" value="1" checked> 音源1</label><label><input type="radio" name="push_sound" value="2" > 音源2</label><label><input type="radio" name="push_sound" value="3" > 音源3</label><label><input type="radio" name="push_sound" value="4" > なし</label></div><div class="radio-group"><strong>ドアブザー</strong><label><input type="radio" name="door_buzzer" value="1" checked> ブザー1</label><label><input type="radio" name="door_buzzer" value="2" > ブザー2</label><label><input type="radio" name="door_buzzer" value="3" > ブザー3</label><label><input type="radio" name="door_buzzer" value="4" > ブザー4</label></div></div>
+  <label for="tts-voice">読み上げ音声</label><select id="tts-voice" style="width:100%"><option value="">端末の標準音声</option></select>
+ </section>
+</main>
+
+<script>
+  let rosenList = {};      
+  let selectedValue = "";  
+  let mawashi = 0;         
+  const baseW = 598; const baseH = 336;
+  const queryParams = new URLSearchParams(location.search);
+  const pageMode = document.body.dataset.mode || (queryParams.get('mode') === 'display' ? 'display' : 'controller');
+  document.body.classList.add(`mode-${pageMode}`);
+  let lastRemoteEventId = null;
+  let hasInitialSnapshot = false;
+  let audioUnlocked = false;
+
+  function roleLink(mode) {
+    const targetPage = mode === 'display' ? 'ipad.html' : 'iphone.html';
+    const url = new URL(targetPage, location.href);
+    return url.href;
+  }
+  document.getElementById('login-button').addEventListener('click', async () => {
+    if (!window.firebaseBus) { document.getElementById('connection-status').textContent = 'firebase-config.js の設定が必要です'; return; }
+    try {
+      await window.firebaseBus.login(document.getElementById('login-email').value, document.getElementById('login-password').value);
+      document.getElementById('connection-status').textContent = 'ログインしました。同期中です';
+    } catch (error) { document.getElementById('connection-status').textContent = `ログイン失敗: ${error.message}`; }
+  });
+  document.getElementById('logout-button').addEventListener('click', async () => {
+    await window.firebaseBus?.logout();
+    document.getElementById('login-close').hidden=true;
+    document.body.classList.add('auth-required');
+    document.getElementById('connection-status').textContent = 'ログアウトしました';
+    document.getElementById('login-button').style.display = 'inline-block';
+    document.getElementById('logout-button').style.display = 'none';
+  });
+  const ttsVoiceSelect = document.getElementById('tts-voice');
+  function refreshTtsVoices() {
+    if (!('speechSynthesis' in window)) {
+      ttsVoiceSelect.disabled = true;
+      document.getElementById('connection-status').textContent = 'このブラウザーは音声読み上げに対応していません';
+      return;
+    }
+    const previous = localStorage.getItem('bus-display-tts-voice') || '';
+    const japaneseVoices = speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('ja'));
+    ttsVoiceSelect.innerHTML = '<option value="">端末の標準音声</option>';
+    for (const voice of japaneseVoices) {
+      const option = document.createElement('option');
+      option.value = voice.name;
+      option.textContent = `${voice.name} (${voice.lang})`;
+      ttsVoiceSelect.appendChild(option);
+    }
+    if ([...ttsVoiceSelect.options].some(option => option.value === previous)) ttsVoiceSelect.value = previous;
+  }
+  if ('speechSynthesis' in window) {
+    refreshTtsVoices();
+    speechSynthesis.addEventListener('voiceschanged', refreshTtsVoices);
+  }
+  ttsVoiceSelect.addEventListener('change', () => {
+    localStorage.setItem('bus-display-tts-voice', ttsVoiceSelect.value);
+    if (pageMode === 'controller') publishState();
+  });
+
+  let ttsReadings = {};
+  const ttsReadingsReady = fetch('tts-readings.json').then(response => {
+    if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
+    return response.json();
+  }).then(values => { ttsReadings=values; }).catch(error => console.warn(error));
+  function ttsReading(value) {
+    const name=String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g,'').trim();
+    return ttsReadings[name] || name;
+  }
+  function makeStopAnnouncement(stopName, data = rosenList[selectedValue] || [], index = mawashi, routeName = selectedValue) {
+    const clean = value => String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g, '').trim();
+    const name = ttsReading(clean(stopName));
+    if (!name) return '';
+    const normal = 'つぎは、'+name+'、'+name+'、おおりのかたは、おしらせねがいます。';
+    if (data.length > 2 && index >= data.length - 3) {
+      return 'つぎは、しゅうてん、'+name+'、'+name+'でございます。ごじょうしゃ、ありがとうございました。';
+    }
+    if (index === 1) {
+      const metadata = data[data.length - 1] || [];
+      const company = String(routeName).split(' / ')[0];
+      const operator = company.includes('中央') ? 'ちゅうおうばす' : (company.includes('バス') ? ttsReading(company) : 'とうばす');
+      let system = String(metadata[14] || routeName).normalize('NFKC').match(/([東西南北]?[A-Za-z]?\d+(?:[-・]\d+)?)/)?.[1] || '';
+      system=system.replace(/^[東西南北]/, value => ({'東':'ひがし','西':'にし','南':'みなみ','北':'きた'}[value]));
+      const destination = ttsReading(data[data.length - 2]?.[1] || data[data.length - 2]?.[0] || metadata[1]);
+      return 'いつも、'+operator+'をごりよういただきまして、ありがとうございます。このばすは、'+(system ? system+'ばん、' : '')+destination+'ゆきでございます。'+normal;
+    }
+    return normal;
+  }
+
+  function speakStopAnnouncement(stopName, text = makeStopAnnouncement(stopName)) {
+    if (!audioUnlocked || !('speechSynthesis' in window) || !stopName) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.92;
+    utterance.volume = 1;
+    const voiceName = ttsVoiceSelect.value || localStorage.getItem('bus-display-tts-voice');
+    const voice = speechSynthesis.getVoices().find(candidate => candidate.name === voiceName);
+    if (voice) utterance.voice = voice;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  }
+  function setStopIndicator(requested) {
+    const indicator=document.getElementById('stop-indicator');
+    indicator.classList.toggle('pushed',requested);
+    indicator.setAttribute('aria-label',requested?'停車要求あり':'停車要求なし');
+  }
+  function publishState(eventName = '') {
+    if (!window.firebaseBus || !selectedValue || !rosenList[selectedValue]) return;
+    const state = {
+      routeName: selectedValue,
+      routeData: rosenList[selectedValue],
+      mawashi,
+      stopRequested: document.getElementById('stop-indicator').classList.contains('pushed'),
+      doorsOpen: document.getElementById('btn-close').disabled,
+      ttsVoice: localStorage.getItem('bus-display-tts-voice') || '',
+      audioSettings: { push: document.querySelector('[name=push_sound]:checked').value, door: document.querySelector('[name=door_buzzer]:checked').value },
+      eventName: eventName || '',
+      eventId: eventName ? `${Date.now()}-${Math.random().toString(16).slice(2)}` : '',
+      updatedAt: Date.now()
+    };
+    window.firebaseBus.send(state).catch(error => {
+      document.getElementById('connection-status').textContent = `送信エラー: ${error.message}`;
+    });
+  }
+
+  function applyRemoteState(state, writerClientId) {
+    if (!state || !Array.isArray(state.routeData)) return;
+    const routeChanged = selectedValue !== state.routeName;
+    const previousMawashi = mawashi;
+    if (typeof state.ttsVoice === 'string') localStorage.setItem('bus-display-tts-voice', state.ttsVoice);
+    rosenList[state.routeName] = state.routeData;
+    selectedValue = state.routeName;
+    mawashi = Number(state.mawashi) || 0;
+    const select = document.getElementById('rosen-select');
+    if (![...select.options].some(option => option.value === selectedValue)) {
+      const option = document.createElement('option');
+      option.value = selectedValue; option.textContent = selectedValue;
+      select.appendChild(option);
+    }
+    select.value = selectedValue;
+    if (routeChanged || previousMawashi !== mawashi) {
+      updateDisplay();
+      forceSwitchToScreen1();
+    }
+    document.getElementById('btn-next').disabled = false;
+    document.getElementById('btn-back').disabled = false;
+    setStopIndicator(Boolean(state.stopRequested));
+    document.getElementById('btn-open').disabled = Boolean(state.doorsOpen);
+    document.getElementById('btn-close').disabled = !state.doorsOpen;
+    const eventIsNew = state.eventId && state.eventId !== lastRemoteEventId;
+    const isRemoteWriter = writerClientId !== window.firebaseBus?.clientId;
+    if (hasInitialSnapshot && eventIsNew && isRemoteWriter) {
+      if (state.eventName === 'nextStop') triggerNextStopScreen();
+      if (state.eventName === 'depart') triggerDepartScreen();
+      if (state.eventName === 'open') forceSwitchToScreen1();
+      if (state.eventName === 'next') {
+        stopBroadcast();
+        const currentData = state.routeData[mawashi + 1] || [];
+        const terminalData = state.routeData[state.routeData.length - 1] || [];
+        if (currentData[14] && terminalData[14]) currentAnnounceAudio = playSound(`sound_file/${terminalData[14]}/${currentData[14]}`);
+        else speakStopAnnouncement(currentData[1] || currentData[0]);
+      }
+      if (audioUnlocked && state.eventName === 'back') playSound('data/nextpush.wav');
+    }
+    if (state.eventId) lastRemoteEventId = state.eventId;
+    hasInitialSnapshot = true;
+  }
+
+  function connectRealtimeRoom() {
+    if (!window.firebaseBus) {
+      document.getElementById('connection-status').textContent = 'Firebase設定を確認してください (firebase-config.js)';
+      return;
+    }
+    hasInitialSnapshot = false;
+    window.firebaseBus.connect((state, writerClientId) => {
+      if (pageMode === 'display' || !selectedValue) applyRemoteState(state, writerClientId);
+      else if(state) setStopIndicator(Boolean(state.stopRequested));
+    })
+      .then(() => {
+        document.getElementById('connection-status').textContent = 'Firebase同期中';
+        if (pageMode === 'controller' && selectedValue) setTimeout(() => publishState(), 300);
+      })
+      .catch(error => { document.getElementById('connection-status').textContent = `Firebase接続エラー: ${error.message}`; });
+  }
+  window.addEventListener('firebase-authenticated', () => {
+    document.getElementById('login-button').style.display = 'none';
+    document.getElementById('logout-button').style.display = 'inline-block';
+    document.body.classList.remove('auth-required');
+    document.getElementById('login-close').hidden=false;
+    connectRealtimeRoom();
+  });
+
+  // 音声のチャンネル管理（Pythonの Pygame mixer に相当）
+  let currentAnnounceAudio = null; // 車内放送（music）専用チャンネル
+
+  // 効果音やチャイム（Sound）は独立して鳴らす
+  function playSound(path) {
+    const audio = new Audio(path);
+    if (pageMode === 'display') audio.play().catch(e => console.log("音声未検出(スキップ): " + path));
+    return audio;
+  }
+
+  // ★放送のみを強制停止する処理
+  function stopBroadcast() {
+    if (currentAnnounceAudio) {
+      currentAnnounceAudio.pause();
+      currentAnnounceAudio.currentTime = 0;
+      currentAnnounceAudio = null;
+    }
+  }
+
+  // CSV読み込み処理 (ファイル複数選択とフォルダ選択の両方に対応)
+  function parseCsvLine(line) {
+    const fields = [];
+    let value = '', quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const character = line[i];
+      if (character === '"') {
+        if (quoted && line[i + 1] === '"') { value += '"'; i++; }
+        else quoted = !quoted;
+      } else if (character === ',' && !quoted) {
+        fields.push(value); value = '';
+      } else value += character;
+    }
+    fields.push(value);
+    return fields;
+  }
+  function parseCsvText(text) {
+    return text.replace(/^\uFEFF/, '').split(/\r\n|\n/).filter(line => line.trim() !== '').map(parseCsvLine);
+  }
+
+
+  document.getElementById('login-close').onclick=()=>document.body.classList.remove('auth-required');
+  document.getElementById('account-button').onclick = () => document.body.classList.add('auth-required');
+  document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-button').click(); });
+  const map = window.L ? L.map('map',{zoomControl:false}).setView([43.0618,141.3545],12) : null;
+  if (map) L.control.zoom({position:'bottomleft'}).addTo(map);
+  if (map) L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap contributors', maxZoom:19 }).addTo(map);
+  const routeLayer = map ? L.layerGroup().addTo(map) : null;
+  let mappedRoute = '', routeBounds = null, vehicleMarker = null, accuracyCircle = null;
+  function routeStops() {
+    return (rosenList[selectedValue] || []).map((row,index) => ({row,index,lat:Number(row[16]),lon:Number(row[17])})).filter(x => x.index>0 && x.row[16] && x.row[17] && Number.isFinite(x.lat) && Number.isFinite(x.lon) && Math.abs(x.lat)<=90 && Math.abs(x.lon)<=180);
+  }
+  function updateRouteMap() {
+    const data=rosenList[selectedValue] || [], stops=routeStops(), current=mawashi+1;
+    const changed=mappedRoute!==selectedValue;
+    mappedRoute=selectedValue;
+    document.getElementById('current-stop-label').textContent='次は '+(data[current]?.[1] || data[current]?.[0] || '—');
+    document.getElementById('progress-label').textContent=Math.min(current,Math.max(0,data.length-2))+' / '+Math.max(0,data.length-2);
+    document.getElementById('map-caption').textContent=stops.length ? selectedValue+' · '+stops.length+'停留所' : 'この系統には地図表示用の座標がありません。手動送りを利用できます。';
+    if (!map) { document.getElementById('map-caption').textContent='地図ライブラリを読み込めませんでした'; return; }
+    routeLayer.clearLayers();
+    if (!stops.length) return;
+    const points=stops.map(x=>[x.lat,x.lon]);
+    L.polyline(points,{color:'#2563eb',weight:4,opacity:.7}).addTo(routeLayer);
+    const passed=stops.filter(x=>x.index<current).map(x=>[x.lat,x.lon]);
+    if(passed.length>1) L.polyline(passed,{color:'#10b981',weight:5}).addTo(routeLayer);
+    stops.forEach((x,i)=>{const icon=L.divIcon({className:'stop-marker '+(x.index<current?'passed':x.index===current?'target':''),html:String(i+1),iconSize:[22,22],iconAnchor:[11,11]}); const label=document.createElement('span'); label.textContent=(i===0?'始点 · ':i===stops.length-1?'終点 · ':'')+(x.row[0] || x.row[1]); L.marker([x.lat,x.lon],{icon}).bindPopup(label).addTo(routeLayer);});
+    routeBounds=L.latLngBounds(points);
+    if(changed) map.fitBounds(routeBounds,{padding:[30,40],maxZoom:15});
+  }
+  document.getElementById('map-fit').onclick=()=>{ if(map && routeBounds) map.fitBounds(routeBounds,{padding:[30,40],maxZoom:15}); };
+  document.querySelectorAll('[name=push_sound],[name=door_buzzer]').forEach(input=>input.addEventListener('change',()=>publishState()));
+
+  const bundledRoutePaths = new Map();
+  async function loadBundledRoute(routeName) {
+    if (rosenList[routeName]) return rosenList[routeName];
+    const relativePath = bundledRoutePaths.get(routeName);
+    if (!relativePath) return null;
+    const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
+    const response = await fetch(csvUrl);
+    if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
+    const text = await response.text();
+    rosenList[routeName] = parseCsvText(text);
+    return rosenList[routeName];
+  }
+
+  async function loadBundledRoutes() {
+    try {
+      const manifestResponse = await fetch('routes/index.json', { cache: 'no-store' });
+      if (!manifestResponse.ok) return;
+      const manifest = await manifestResponse.json();
+      const select = document.getElementById('rosen-select');
+      for (const entry of manifest.routes || []) {
+        bundledRoutePaths.set(entry.name, entry.path);
+        if (![...select.options].some(option => option.value === entry.name)) {
+          const option = document.createElement('option');
+          option.value = entry.name; option.textContent = entry.name;
+          select.appendChild(option);
+        }
+      }
+      const firstRoute = (manifest.routes || [])[0];
+      if (!selectedValue && firstRoute) {
+        selectedValue = firstRoute.name;
+        select.value = selectedValue;
+        await loadBundledRoute(selectedValue);
+        mawashi = 0;
+        updateDisplay();
+        document.getElementById('btn-next').disabled = false;
+        document.getElementById('btn-back').disabled = false;
+        publishState();
+      }
+    } catch (error) {
+      console.warn('Bundled routes could not be loaded:', error);
+    }
+  }
+  loadBundledRoutes();
+
+  document.getElementById('rosen-select').addEventListener('change', async (e) => {
+    selectedValue = e.target.value; mawashi = 0;
+    if (selectedValue) {
+      try {
+        await loadBundledRoute(selectedValue);
+        updateDisplay(); forceSwitchToScreen1();
+        document.getElementById('btn-next').disabled = false;
+        document.getElementById('btn-back').disabled = false;
+        publishState();
+      } catch (error) {
+        document.getElementById('connection-status').textContent = error.message;
+      }
+    }
+  });
+
+  // 描画更新処理
+  function updateDisplay() {
+    if (!selectedValue || !rosenList[selectedValue]) return;
+    const data = rosenList[selectedValue];
+    if (mawashi + 1 >= data.length) return; 
+
+    document.getElementById('mawashi-display').textContent = mawashi;
+    const currentData = data[mawashi + 1];
+    updateRouteMap();
+
+    // ★Python版の size_adjustment 処理を移植（文字数が11以上の時は縮小）
+    const currentLength = (currentData[1] || "").length;
+    let textSize = 35;
+    if (currentLength >= 11) {
+        textSize = Math.floor(35 * 11 / currentLength);
+    }
+    const fontSizeCalc = `calc(${textSize} * var(--pt-ratio) / var(--base-w) * 100cqw)`;
+    
+    const mainDestText = document.getElementById('main-dest-text');
+    mainDestText.textContent = currentData[1] || ""; 
+    mainDestText.style.fontSize = fontSizeCalc;
+
+    const sc2NextStopJa = document.getElementById('sc2-next-stop-ja');
+    const metadata=data[data.length-1] || [];
+    // Original 16-column CSV: route summary is column 16. Columns 17/18 are now coordinates.
+    const initialSummary=metadata[15] || selectedValue;
+    const initialLength=Array.from(initialSummary).length;
+    const initialTextSize=initialLength>=12 ? Math.floor(35*12/initialLength+.3) : 35;
+    sc2NextStopJa.textContent = mawashi===0 ? initialSummary : (currentData[1] || '');
+    sc2NextStopJa.style.fontSize = mawashi===0 ? `calc(${initialTextSize} * var(--pt-ratio) / var(--base-w) * 100cqw)` : fontSizeCalc;
+    
+    const nextBoxText = document.getElementById('next-box-text');
+    if (data.length <= mawashi + 3 && mawashi > 0) {
+      nextBoxText.innerHTML = "終<br>点";
+    } else {
+      nextBoxText.innerHTML = "次<br>は";
+    }
+
+    document.getElementById('scroll-txt').textContent = currentData[9] || "";
+    idou = baseW; 
+
+    const grid = document.getElementById('fare-grid');
+    grid.innerHTML = '';
+    let counter = 1, fareCount = 0; 
+    for (let i3 = 0; i3 < 2; i3++) {
+      for (let i2 = 0; i2 < 3; i2++) {
+        const cell = document.createElement('div');
+        cell.className = 'abs fare-cell';
+        cell.style.left = `calc(${3 + i2 * 198} / ${baseW} * 100%)`;
+        cell.style.top = `calc(${96 + i3 * 96.5} / ${baseH} * 100%)`;
+        
+        let val = currentData[3 + fareCount] || ""; 
+        if (fareCount === 0 && val !== "") {
+          cell.innerHTML = `<div class="abs cell-top flex-center"><span style="font-size: calc(10 * var(--pt-ratio) / var(--base-w) * 100cqw); margin-right:5px; color:#fff;">券なし</span><span class="cell-no">${counter}</span></div><div class="abs cell-bottom flex-center"><span class="cell-val">${val}</span></div>`;
+        } else {
+          cell.innerHTML = `<div class="abs cell-top flex-center"><span class="cell-no">${counter}</span></div><div class="abs cell-bottom flex-center"><span class="cell-val">${val}</span></div>`;
+        }
+        grid.appendChild(cell); counter++; fareCount++;
+      }
+    }
+
+    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 
+
+    for (let n_text = 0; n_text < 4; n_text++) {
+      let targetRow = null;
+      if (data.length <= mawashi + 6) {
+        targetRow = data[4 - n_text + mawashi];
+      } else if (mawashi === 0) {
+        if (n_text === 0) targetRow = data[data.length - 2];
+        else targetRow = data[5 - n_text + mawashi];
+      } else {
+        if (n_text === 0) targetRow = data[data.length - 2];
+        else targetRow = data[4 - n_text + mawashi];
+      }
+
+      if (targetRow) {
+        document.getElementById(`sc3-ja-${n_text}`).textContent = targetRow[0] || "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = targetRow[2] || "";
+      } else {
+        document.getElementById(`sc3-ja-${n_text}`).textContent = "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = "";
+      }
+    }
+    if(mawashi===0 && currentScNo===0) forceSwitchToScreen1();
+  }
+
+  // ==========================================
+  // アニメーション・画面切り替え管理
+  // ==========================================
+  const allMainScreens = document.querySelectorAll('#dp-screen .screen');
+  const allInterruptScreens = document.querySelectorAll('#dp-screen .interrupt-screen');
+  const mainScreens = [document.getElementById('screen1'), document.getElementById('screen2'), document.getElementById('screen3')];
+  const waitTimes = [8000, 6000, 6000];
+  let currentScNo = 0;
+  let screenTimer = null;
+  const move_sw = 5500; 
+
+  let lcdBlackoutTimer=null;
+  function hideAllScreens() {
+    const blackout=document.getElementById('lcd-blackout');
+    clearTimeout(lcdBlackoutTimer);
+    blackout.hidden=false;
+    lcdBlackoutTimer=setTimeout(()=>{blackout.hidden=true;},100);
+    allMainScreens.forEach(s => s.classList.remove('active'));
+    allInterruptScreens.forEach(s => s.classList.remove('active'));
+  }
+
+  function switchScreen() {
+    hideAllScreens();
+    currentScNo = (currentScNo + 1) % mainScreens.length;
+    if(mawashi===0 && currentScNo===0) currentScNo=1;
+    mainScreens[currentScNo].classList.add('active');
+    screenTimer = setTimeout(switchScreen, waitTimes[currentScNo]);
+  }
+
+  function forceSwitchToScreen1() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    currentScNo = mawashi===0 ? 1 : 0;
+    mainScreens[currentScNo].classList.add('active');
+    screenTimer = setTimeout(switchScreen, waitTimes[currentScNo]);
+  }
+
+  function triggerNextStopScreen() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    document.getElementById('screen-ns1').classList.add('active');
+    setTimeout(() => {
+      hideAllScreens();
+      document.getElementById('screen-ns2').classList.add('active');
+      setTimeout(forceSwitchToScreen1, move_sw);
+    }, move_sw);
+  }
+
+  function triggerDepartScreen() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    document.getElementById('screen-d1').classList.add('active');
+    setTimeout(() => {
+      hideAllScreens();
+      document.getElementById('screen-d2').classList.add('active');
+      setTimeout(forceSwitchToScreen1, move_sw);
+    }, move_sw);
+  }
+
+  screenTimer = setTimeout(switchScreen, waitTimes[0]);
+
+  let idou = baseW;
+  function animateScroll() {
+    idou -= 2; 
+    const scrollTxt = document.getElementById('scroll-txt');
+    const dpRect = document.getElementById('dp-screen').getBoundingClientRect();
+    const rect = scrollTxt.getBoundingClientRect();
+    if (idou < -((rect.width / dpRect.width) * baseW)) idou = baseW;
+    scrollTxt.style.left = `calc(${idou} / ${baseW} * 100%)`;
+    requestAnimationFrame(animateScroll);
+  }
+  animateScroll();
+
+  // ★「次止まります」アナウンスの延期監視処理（キュー）
+
+  // ==========================================
+  // ボタン操作
+  // ==========================================
+  document.getElementById('btn-next').addEventListener('click', () => {
+    const data = rosenList[selectedValue];
+    if (data && mawashi < data.length - 3) { 
+      stopBroadcast(); // ★前の放送を強制停止
+      mawashi++;
+      updateDisplay();
+      forceSwitchToScreen1(); 
+      setStopIndicator(false);
+      
+      const currentData = data[mawashi + 1];
+      publishState('next');
+    }
+  });
+
+  document.getElementById('btn-back').addEventListener('click', () => {
+    if (mawashi > 0) {
+      stopBroadcast(); // ★前の放送を強制停止
+      mawashi--;
+      updateDisplay();
+      forceSwitchToScreen1(); 
+      setStopIndicator(false);
+      currentAnnounceAudio = playSound(`data/nextpush.wav`);
+      publishState('back');
+    }
+  });
+
+  const btnOpen = document.getElementById('btn-open');
+  const btnClose = document.getElementById('btn-close');
+  
+  btnOpen.addEventListener('click', () => {
+    btnOpen.disabled = true; btnClose.disabled = false;
+    setStopIndicator(false);
+    forceSwitchToScreen1(); 
+    clearTimeout(screenTimer); 
+    
+    const doorBuzzerVal = document.querySelector('input[name="door_buzzer"]:checked').value;
+    if (doorBuzzerVal === "1") playSound(`data/taihei_door_open.wav`);
+    else playSound(`data/buzzer${doorBuzzerVal}.wav`);
+    publishState('open');
+  });
+
+  btnClose.addEventListener('click', () => {
+    btnClose.disabled = true; btnOpen.disabled = false;
+    
+    const doorBuzzerVal = document.querySelector('input[name="door_buzzer"]:checked').value;
+    if (doorBuzzerVal === "1") playSound(`data/taihei_door_close.wav`);
+    else playSound(`data/buzzer${doorBuzzerVal}.wav`);
+    
+    triggerDepartScreen(); 
+    publishState('depart');
+    
+    setTimeout(() => {
+      if (rosenList[selectedValue]) {
+        const destName = rosenList[selectedValue][rosenList[selectedValue].length - 1][1];
+        if (destName === "石狩営業所" || destName === "北営業所" || destName === "東営業所") {
+          playSound(`data/door_close_${destName}.wav`);
+        }
+      }
+    }, 3000);
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    setStopIndicator(false);
+    publishState('reset');
+  });
+
+  function newDepartureTracker() { return { key:'', arrived:false, outsideSince:null, outsideFixes:0, sent:false }; }
+  let gpsDepartureTracker=newDepartureTracker();
+  function departureDecision(tracker,key,distance,accuracy,radius,now,doorsClosed,isTerminal) {
+    if(tracker.key!==key) Object.assign(tracker,newDepartureTracker(),{key});
+    if(!Number.isFinite(distance) || !Number.isFinite(accuracy) || accuracy>Math.max(50,radius)) return 'poor';
+    if(distance<=radius) {
+      tracker.arrived=true; tracker.outsideSince=null;tracker.outsideFixes=0;
+      return isTerminal?'terminal':'arrived';
+    }
+    const exitRadius=radius+Math.max(20,accuracy);
+    if(!tracker.arrived || distance<exitRadius || !doorsClosed) {
+      tracker.outsideSince=null;tracker.outsideFixes=0;
+      return tracker.arrived?'waiting':'approach';
+    }
+    if(tracker.sent) return 'waiting';
+    if(tracker.outsideSince===null) tracker.outsideSince=now;
+    tracker.outsideFixes++;
+    if(tracker.outsideFixes>=2 && now-tracker.outsideSince>=3000) {tracker.sent=true;return 'depart';}
+    return 'waiting';
+  }
+
+  let gpsWatchId = null;
+  let gpsLastAdvanceAt = 0;
+  let gpsLastAdvancedIndex = -1;
+  document.getElementById('rosen-select').addEventListener('change',()=>{ gpsLastAdvanceAt=0; gpsLastAdvancedIndex=-1; });
+  function distanceMeters(lat1, lon1, lat2, lon2) {
+    const rad = degrees => degrees * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  document.getElementById('gps-auto').addEventListener('change',()=>{ gpsDepartureTracker=newDepartureTracker(); });
+  document.getElementById('gps-start').addEventListener('click', () => {
+    const status = document.getElementById('gps-status');
+    if (!navigator.geolocation) { status.textContent = 'このブラウザーは位置情報に対応していません'; return; }
+    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsDepartureTracker=newDepartureTracker();
+    status.textContent = 'GPS位置を取得中です…';
+    gpsWatchId = navigator.geolocation.watchPosition(position => {
+      const { latitude, longitude, accuracy } = position.coords;
+      if(map) {
+        const point=[latitude,longitude];
+        if(!vehicleMarker) vehicleMarker=L.circleMarker(point,{radius:8,color:'#fff',weight:3,fillColor:'#2563eb',fillOpacity:1}).addTo(map); else vehicleMarker.setLatLng(point);
+        if(!accuracyCircle) accuracyCircle=L.circle(point,{radius:accuracy,color:'#2563eb',weight:1,fillOpacity:.08}).addTo(map); else accuracyCircle.setLatLng(point).setRadius(accuracy);
+        if(document.getElementById('map-follow').checked) map.panTo(point,{animate:true});
+      }
+      status.textContent = `現在地 ${latitude.toFixed(5)}, ${longitude.toFixed(5)} · 精度 約${Math.round(accuracy)}m`;
+      const route = rosenList[selectedValue];
+      if (!document.getElementById('gps-auto').checked) { status.textContent+=' · 手動送り'; return; }
+      const currentIndex=mawashi+1;
+      const current=route && route[currentIndex];
+      if(!current || !current[16] || !current[17]) {status.textContent+=' · 現在の停留所に座標がありません';return;}
+      const radius=Math.max(10,Number(document.getElementById('gps-radius').value)||45);
+      const distance=distanceMeters(latitude,longitude,Number(current[16]),Number(current[17]));
+      const decision=departureDecision(gpsDepartureTracker,selectedValue+':'+currentIndex,distance,accuracy,radius,Date.now(),document.getElementById('btn-close').disabled,currentIndex===route.length-2);
+      if(decision==='depart') {
+        document.getElementById('btn-next').click();
+        status.textContent=current[0]+'を出発 · 次の停留所を放送';
+      } else if(decision==='terminal') {
+        navigator.geolocation.clearWatch(gpsWatchId);gpsWatchId=null;
+        status.textContent='終点に到着しました。GPS追跡を終了しました。';
+      } else if(decision==='arrived') status.textContent=current[0]+'に到着 · 出発を待っています';
+      else if(decision==='approach') status.textContent+=' · '+current[0]+'への到着を待っています';
+      else if(decision==='poor') status.textContent+=' · 精度が低いため自動送りを保留';
+    }, error => {
+      const messages = { 1: '位置情報の許可が必要です', 2: '現在地を取得できません', 3: '位置情報の取得がタイムアウトしました' };
+      status.textContent = messages[error.code] || error.message;
+    }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
+  });
+  document.getElementById('gps-stop').addEventListener('click', () => {
+    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+    document.getElementById('gps-status').textContent = 'GPS停止中';
+  });
+</script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { firebaseConfig } from './firebase-config.js';
+
+  const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_')
+    && firebaseConfig.databaseURL && !firebaseConfig.databaseURL.startsWith('PASTE_');
+  if (configured) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      document.getElementById('login-button').disabled = true;
+      try { await setPersistence(auth, browserLocalPersistence); }
+      finally { document.getElementById('login-button').disabled = false; }
+      const db = getDatabase(app);
+      const clientId = crypto.randomUUID();
+
+      let unsubscribe = null;
+      window.firebaseBus = {
+        clientId,
+        async login(userId, password) {
+          const identifier = String(userId || '').trim();
+          if (!identifier) throw new Error('ユーザーIDを入力してください');
+          const email = identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@bus-display.invalid`;
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
+          } catch (error) {
+            if (!identifier.includes('@') && ['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code)) {
+              throw new Error(`Firebase Authenticationの登録メールを「${email}」に設定し、入力IDと同じパスワードで登録してください。`);
+            }
+            throw error;
+          }
+
+        },
+        async logout() {
+          if (unsubscribe) unsubscribe();
+          await signOut(auth);
+        },
+        connect(callback) {
+          if (unsubscribe) unsubscribe();
+          const stateRef = ref(db, 'privateBus/state');
+          unsubscribe = onValue(stateRef, snapshot => {
+            const value = snapshot.val();
+            if (value) callback(value.state, value.writerClientId);
+          });
+          window.firebaseBus.send = state => set(stateRef, { state, writerClientId: clientId });
+          return Promise.resolve();
+        },
+        send: () => Promise.reject(new Error('ログインして同期を開始してください'))
+      };
+      onAuthStateChanged(auth, user => {
+        if (user) {
+          document.getElementById('login-password').value = '';
+          window.dispatchEvent(new Event('firebase-authenticated'));
+        } else {
+          if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+          window.firebaseBus.send = () => Promise.reject(new Error('ログインしてください'));
+          document.body.classList.remove('authenticated', 'stop-active');
+          document.body.classList.add('auth-required');
+          document.getElementById('login-button').style.display = 'inline-block';
+          document.getElementById('logout-button').style.display = 'none';
+          const close = document.getElementById('login-close');
+          if (close) close.hidden = true;
+          document.getElementById('connection-status').textContent = 'ユーザーIDとパスワードでログインしてください';
+        }
+      }, error => { document.getElementById('connection-status').textContent = 'ログイン状態の復元に失敗しました: ' + error.message; });
+    } catch (error) {
+      document.getElementById('connection-status').textContent = `Firebase初期化エラー: ${error.message}`;
+    }
+  } else {
+    document.getElementById('connection-status').textContent = 'firebase-config.js にFirebaseのWeb設定を入力してください';
+  }
+</script>
+</body>
+</html>
+

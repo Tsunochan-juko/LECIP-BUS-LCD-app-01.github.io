@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>バス運賃表示器・iPad表示</title>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --base-w: 598;
+    --base-h: 336;
+    --pt-ratio: 1.333; /* TkinterのptをWebのpxに合わせる補正 */
+  }
+  
+  body { background-color: #222; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; font-family: sans-serif; }
+
+  /* =========================================
+     ディスプレイ画面 (dp)
+  ========================================= */
+  #dp-screen {
+    width: 100%; max-width: 800px; aspect-ratio: var(--base-w) / var(--base-h); background-color: #080302; position: relative; overflow: hidden; container-type: inline-size; font-family: 'BIZ UDPGothic', sans-serif; color: #ffffff; user-select: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #000;
+  }
+
+  .abs { position: absolute; }
+  .flex-center { display: flex; justify-content: center; align-items: center; }
+  
+  /* 画面切り替え */
+  .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; visibility: hidden; }
+  .screen.active { opacity: 1; visibility: visible; z-index: 10; }
+  
+  /* 割り込み画像画面 */
+  .interrupt-screen { position: absolute; top: 0; left: 0; width: 100%; height: calc(290 / var(--base-h) * 100%); opacity: 0; visibility: hidden; z-index: 20; }
+  .interrupt-screen.active { opacity: 1; visibility: visible; }
+  .full-img { width: 100%; height: 100%; object-fit: fill; }
+
+  /* Screen 1 */
+  .sc1-blue-bg { top: calc(76 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(214 / var(--base-h) * 100%); background-color: #497BA4; }
+  .next-box { top: 0; left: 0; width: calc(33 / var(--base-w) * 100%); height: calc(70 / var(--base-h) * 100%); background-color: #497BA4; font-size: calc(19 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; text-align: center; line-height: 1; white-space: pre-wrap; }
+  .next-box-border { top: calc(70 / var(--base-h) * 100%); left: 0; width: calc(33 / var(--base-w) * 100%); height: calc(3 / var(--base-h) * 100%); background-color: #DFD65C; }
+  .main-dest { top: calc(38 / var(--base-h) * 100%); left: calc(315 / var(--base-w) * 100%); transform: translate(-50%, -50%); font-size: calc(35 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .child-half-txt { top: calc(86 / var(--base-h) * 100%); left: calc(100 / var(--base-w) * 100%); transform: translateY(-50%); font-size: calc(10 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; }
+  .label-ticket { top: calc(78 / var(--base-h) * 100%); left: calc(3 / var(--base-w) * 100%); width: calc(46 / var(--base-w) * 100%); height: calc(16 / var(--base-h) * 100%); background-color: #080302; font-size: calc(9 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .label-fare { top: calc(78 / var(--base-h) * 100%); left: calc(51 / var(--base-w) * 100%); width: calc(46 / var(--base-w) * 100%); height: calc(16 / var(--base-h) * 100%); background-color: #080302; color: #D8A533; font-size: calc(9 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .fare-cell { width: calc(196 / var(--base-w) * 100%); height: calc(95 / var(--base-h) * 100%); }
+  .cell-top { top: 0; left: 0; width: 100%; height: calc(35 / 95 * 100%); background-color: #082345; }
+  .cell-bottom { top: calc(35 / 95 * 100%); left: 0; width: 100%; height: calc(60 / 95 * 100%); background-color: #080302; }
+  .cell-no { font-size: calc(24 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; line-height: 1; }
+  .cell-val { font-size: calc(32 * var(--pt-ratio) / var(--base-w) * 100cqw); font-weight: bold; color: #D8A533; line-height: 1; }
+
+  /* Screen 2 & 3 共通・専用デザイン */
+  .top-bar-blue { top: 0; left: 0; width: 100%; height: calc(36 / var(--base-h) * 100%); background-color: #497BA4; }
+  .top-bar-text { top: calc(18 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(16 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .yellow-bar { left: 0; width: 100%; height: calc(3 / var(--base-h) * 100%); background-color: #DFD65C; }
+  .gray-bar { top: calc(287 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(3 / var(--base-h) * 100%); background-color: #778A8C; }
+  
+  .sc2-black-bottom { top: calc(203 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(84 / var(--base-h) * 100%); background-color: #101010; }
+  .sc2-next-stop-ja { top: calc(140 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(35 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; }
+  .sc2-next-stop-en { top: calc(245 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(18 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #A2B8B8; line-height: 1; white-space: nowrap; }
+
+  /* Screen 3 */
+  .sc3-bg-img { top: calc(36 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(290 / var(--base-h) * 100%); object-fit: fill; clip-path: inset(0 0 calc(36 / 290 * 100%) 0); }
+  /* Tkinterのanchor="nw"と同じ挙動にするため、余計なmarginを消して純粋に座標配置 */
+  .sc3-via-ja { left: calc(125 / var(--base-w) * 100%); font-size: calc(17 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-via-en { left: calc(125 / var(--base-w) * 100%); font-size: calc(11 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #ffffff; line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-dest-ja { left: calc(125 / var(--base-w) * 100%); font-size: calc(20 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; transform-origin: top left; }
+  .sc3-dest-en { left: calc(125 / var(--base-w) * 100%); font-size: calc(13 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #ffffff; line-height: 1; white-space: nowrap; transform-origin: top left; }
+
+  /* スクロールエリア */
+  .scroll-area { top: calc(291 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(45 / var(--base-h) * 100%); background-color: #080302; overflow: hidden; z-index: 100; }
+  .scroll-txt { top: 50%; transform: translateY(-50%); white-space: nowrap; color: #D8A533; font-size: calc(30 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; }
+
+  /* 操作パネル */
+  #controller { width: 100%; max-width: 800px; margin-top: 30px; background-color: #e0e0e0; padding: 20px; border-radius: 8px; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .panel-section { background: #fff; padding: 15px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .panel-section h3 { margin-top: 0; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+  .setting-group { margin-bottom: 15px; }
+  .setting-group label { display: block; font-size: 14px; margin-bottom: 5px; font-weight: bold;}
+  .radio-group { display: flex; flex-direction: column; gap: 5px; font-size: 14px; margin-bottom: 10px;}
+  .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+  button { padding: 10px; font-size: 18px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; box-shadow: 0 3px 0 rgba(0,0,0,0.3); }
+  button:active { transform: translateY(3px); box-shadow: none; }
+  button:disabled { background-color: #999 !important; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-next { background-color: #db3131; color: white; grid-column: span 2; height: 60px; font-size: 24px;}
+  .btn-back { background-color: #222222; color: white; height: 60px;}
+  .btn-door { background-color: #222222; color: white; height: 60px; font-size: 24px; }
+  .btn-reset { background-color: #222222; color: white; font-size: 14px; }
+  .stop-button { background-color: #DACD27; border: 2px solid #fff; border-radius: 8px; padding: 10px; margin-bottom: 15px; cursor: pointer; text-align: center; box-shadow: inset 0 0 0 5px #120109; transition: 0.2s; }
+  .stop-button-text { background-color: #211117; color: #211117; border-radius: 4px; padding: 10px; font-family: 'MS UI Gothic', sans-serif; font-size: 24px; font-weight: bold; text-shadow: 0 0 5px rgba(228, 110, 121, 0); }
+  .stop-button.pushed .stop-button-text { color: #e46e79; text-shadow: 0 0 10px #e46e79; }
+  .file-input { display: block; width: 100%; border: 2px dashed #497BA4; padding: 10px; box-sizing: border-box; background: #f9f9f9; cursor: pointer; }
+  #connection-bar { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; background: rgba(0,0,0,.72); }
+  .login-card { width: min(100%, 360px); padding: 24px; border-radius: 14px; box-sizing: border-box; background: #f4f4f4; color: #171717; box-shadow: 0 16px 48px rgba(0,0,0,.45); }
+  .login-card h1 { margin: 0 0 18px; font-size: 22px; }
+  .login-card label { display: block; margin: 12px 0 5px; font-size: 14px; font-weight: 700; }
+  .login-card input { width: 100%; padding: 11px; box-sizing: border-box; font-size: 16px; }
+  .login-card button { width: 100%; margin-top: 16px; padding: 11px; font-size: 16px; }
+  #connection-status { margin-top: 12px; font-size: 13px; color: #333; overflow-wrap: anywhere; }
+  .role-tag { font-weight: bold; padding: 7px 10px; background: #dceafa; border-radius: 4px; }
+  #tts-voice { display: none; }
+  body.mode-display { padding: 12px; }
+  body.mode-display #controller { display: none; }
+  body.mode-display #dp-screen { max-width: min(100%, 1200px); }
+  body.mode-display.authenticated { height: 100dvh; min-height: 100dvh; padding: 0; justify-content: center; overflow: hidden; touch-action: manipulation; background: #111; transition: background 180ms ease; }
+  body.mode-display.authenticated #connection-bar { display: none; }
+  body.mode-display.authenticated #dp-screen { width: min(100vw, 177.976dvh); max-width: none; flex: none; border: 0; z-index: 1; }
+  body.mode-display.authenticated.stop-active { background: radial-gradient(ellipse at center, #c51f2e 0%, #9e121f 65%, #5c0b13 100%); box-shadow: inset 0 0 80px rgba(255, 45, 60, .95); }
+  body.mode-controller #dp-screen { display: none; }
+  body.mode-controller #controller { max-width: 800px; margin-top: 0; }
+  @media (max-width: 600px) { #controller { grid-template-columns: 1fr; padding: 12px; gap: 12px; } .panel-section { padding: 12px; } }
+  #lcd-blackout { position:absolute; inset:0; z-index:1000; background:#000; pointer-events:none; }
+</style>
+<link rel="manifest" href="ipad.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="app-icons/bus-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="運賃表示器">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563eb">
+</head>
+<body data-mode="display">
+
+<button id="audio-retry" hidden type="button" style="position:fixed;bottom:16px;right:16px;z-index:2000;background:#fff;color:#222;padding:10px 14px;font-size:14px;">タップして音声を有効化・試聴</button>
+<div id="connection-bar">
+  <section class="login-card" aria-labelledby="login-title">
+    <h1 id="login-title">運賃表示器</h1>
+    <label for="login-email">ユーザーID</label>
+    <input id="login-email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false">
+    <label for="login-password">パスワード</label>
+    <input id="login-password" type="password" autocomplete="current-password">
+    <button id="login-button">ログイン</button>
+    <button id="logout-button" style="display:none">ログアウト</button>
+    <div id="connection-status" role="status">Firebaseへ接続中…</div>
+  </section>
+  <select id="tts-voice" aria-label="読み上げ音声"><option value="">端末の標準音声</option></select>
+</div>
+
+<div id="dp-screen">
+  <div id="lcd-blackout" hidden aria-hidden="true"></div>
+  <div id="screen1" class="screen active">
+    <div class="abs sc1-blue-bg"></div>
+    <div class="abs flex-center next-box" id="next-box-text">次<br>は</div>
+    <div class="abs next-box-border"></div>
+    <div class="abs main-dest" id="main-dest-text">-- 終点 --</div>
+    <div class="abs child-half-txt">小児半額(但し端数は１０円単位に切り上げ)</div>
+    <div class="abs flex-center label-ticket">整理券</div>
+    <div class="abs flex-center label-fare">運 賃</div>
+    <div id="fare-grid"></div>
+  </div>
+
+  <div id="screen2" class="screen">
+    <div class="abs top-bar-blue"></div>
+    <div class="abs top-bar-text">次 は ｜ NEXT</div>
+    <div class="abs yellow-bar" style="top: calc(200 / var(--base-h) * 100%);"></div>
+    <div class="abs sc2-black-bottom"></div>
+    <div class="abs gray-bar"></div>
+    <div class="abs sc2-next-stop-ja" id="sc2-next-stop-ja">-- 次の停留所 --</div>
+    <div class="abs sc2-next-stop-en" id="sc2-next-stop-en">-- Next Stop --</div>
+  </div>
+
+  <div id="screen3" class="screen">
+    <div class="abs top-bar-blue"></div>
+    <div class="abs top-bar-text">経由地 ｜ VIA</div>
+    <img src="data/screen3.png" class="abs sc3-bg-img" alt="" onerror="this.style.display='none'">
+    
+    <div class="abs sc3-via-ja" id="sc3-ja-0" style="top: calc(73 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-0" style="top: calc(101 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-ja" id="sc3-ja-1" style="top: calc(124.5 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-1" style="top: calc(152.5 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-ja" id="sc3-ja-2" style="top: calc(176 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-via-en" id="sc3-en-2" style="top: calc(204 / var(--base-h) * 100%);"></div>
+    <div class="abs sc3-dest-ja" id="sc3-ja-3" style="top: calc(228 / var(--base-h) * 100%);">-- 終点 --</div>
+    <div class="abs sc3-dest-en" id="sc3-en-3" style="top: calc(262 / var(--base-h) * 100%);">-- Destination --</div>
+    <div class="abs yellow-bar" style="top: calc(256 / var(--base-h) * 100%);"></div>
+    <div class="abs gray-bar"></div>
+  </div>
+
+  <div id="screen-ns1" class="interrupt-screen"><img src="data/nextstop_1.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#080302'"></div>
+  <div id="screen-ns2" class="interrupt-screen"><img src="data/nextstop_2.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#111'"></div>
+  <div id="screen-d1" class="interrupt-screen"><img src="data/depart_1.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#080302'"></div>
+  <div id="screen-d2" class="interrupt-screen"><img src="data/depart_2.png" class="abs full-img" alt="" onerror="this.style.backgroundColor='#111'"></div>
+
+  <div class="abs scroll-area">
+    <div class="abs scroll-txt" id="scroll-txt">CSVファイルを選択してください</div>
+  </div>
+</div>
+
+<div id="controller">
+  <div class="panel-section">
+    <h3>設定 & データ読み込み</h3>
+    <div class="setting-group">
+      <label>1. CSVファイルまたは変換済みフォルダを選択</label>
+      <input type="file" id="csv-input" accept=".csv" multiple class="file-input">
+      <label for="csv-folder-input" style="margin-top:8px;">または、変換済みCSVフォルダを選択</label>
+      <input type="file" id="csv-folder-input" accept=".csv" multiple webkitdirectory class="file-input">
+      <small>フォルダ内のCSVをまとめて読み込みます。iPhoneでは複数CSVの選択も使えます。</small>
+    </div>
+    <div class="setting-group">
+      <label>2. 路線(ファイル)を選択</label>
+      <select id="rosen-select" style="width: 100%; padding: 8px; font-size: 16px;">
+        <option value="">ファイルを選択してください</option>
+      </select>
+    </div>
+    <div class="setting-group">
+      <label>サイズの変更 (画面幅)</label>
+      <input type="range" id="size-slider" min="400" max="1200" value="800" style="width: 100%;">
+    </div>
+    <div class="setting-group">
+      <label>位置情報による停留所自動進行 (操作端末で設定)</label>
+      <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+        <button type="button" id="gps-start">GPS開始</button>
+        <button type="button" id="gps-stop">GPS停止</button>
+        <label style="display:inline-flex; align-items:center; gap:4px; font-weight:normal;">
+          検知半径 <input type="number" id="gps-radius" value="45" min="10" max="300" style="width:70px; padding:6px;"> m
+        </label>
+        <label style="font-weight:normal;"><input type="checkbox" id="gps-auto" checked> 停留所で自動進行</label>
+      </div>
+      <small id="gps-status" role="status">GPS停止中。iPhoneでGPS開始を押すと位置情報の許可を求めます。</small>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <div class="radio-group">
+        <strong>押ボタン音源</strong>
+        <label><input type="radio" name="push_sound" value="1" checked> 音源1</label>
+        <label><input type="radio" name="push_sound" value="2"> 音源2</label>
+        <label><input type="radio" name="push_sound" value="3"> 音源3</label>
+        <label><input type="radio" name="push_sound" value="4"> なし</label>
+      </div>
+      <div class="radio-group">
+        <strong>ドアブザー</strong>
+        <label><input type="radio" name="door_buzzer" value="1" checked> ブザー1</label>
+        <label><input type="radio" name="door_buzzer" value="2"> ブザー2</label>
+        <label><input type="radio" name="door_buzzer" value="3"> ブザー3</label>
+        <label><input type="radio" name="door_buzzer" value="4"> ブザー4</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section">
+    <h3>操作パネル (現在: <span id="mawashi-display">0</span>)</h3>
+    <div class="stop-button" id="btn-stop">
+      <div class="stop-button-text">とまります</div>
+    </div>
+    <div class="button-grid">
+      <button class="btn-next" id="btn-next" disabled>次</button>
+      <button class="btn-back" id="btn-back" disabled>戻</button>
+      <button class="btn-door" id="btn-open">開</button>
+      <button class="btn-door" id="btn-close" disabled>閉</button>
+      <button class="btn-reset" id="btn-reset">ﾘｾｯﾄ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let rosenList = {};      
+  let selectedValue = "";  
+  let mawashi = 0;         
+  const baseW = 598; const baseH = 336;
+  const queryParams = new URLSearchParams(location.search);
+  const pageMode = document.body.dataset.mode || (queryParams.get('mode') === 'display' ? 'display' : 'controller');
+  document.body.classList.add(`mode-${pageMode}`);
+  let lastRemoteEventId = null;
+  let hasInitialSnapshot = false;
+  let audioUnlocked = false;
+  let displayAudioContext = null;
+  function showAudioRetry() {
+    document.getElementById('audio-retry').hidden = false;
+  }
+  function unlockDisplayAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) { showAudioRetry(); return Promise.resolve(false); }
+    try {
+      if (!displayAudioContext || displayAudioContext.state === 'closed') displayAudioContext = new AudioContextClass();
+      return displayAudioContext.resume().then(() => {
+        loadAdvanceChime().catch(console.warn);
+        audioUnlocked = displayAudioContext.state === 'running';
+        document.getElementById('audio-retry').hidden = audioUnlocked;
+        return audioUnlocked;
+      }).catch(() => { audioUnlocked = false; showAudioRetry(); return false; });
+    } catch { showAudioRetry(); return Promise.resolve(false); }
+  }
+  let advanceChimeBuffer = null;
+  let announcementGeneration = 0;
+  async function loadAdvanceChime() {
+    if (!advanceChimeBuffer) {
+      const response = await fetch('data/nextpush.wav');
+      if (!response.ok) throw new Error('チャイム音源を読み込めません');
+      advanceChimeBuffer = await displayAudioContext.decodeAudioData(await response.arrayBuffer());
+    }
+    return advanceChimeBuffer;
+  }
+  async function playAdvanceChime() {
+    const context = displayAudioContext;
+    if (!context || context.state !== 'running') { audioUnlocked=false; showAudioRetry(); return false; }
+    try {
+      const buffer = await loadAdvanceChime();
+      return await new Promise(resolve => {
+        const source=context.createBufferSource();
+        source.buffer=buffer; source.connect(context.destination);
+        source.onended=()=>resolve(true); source.start();
+      });
+    } catch (error) { console.warn(error); showAudioRetry(); return false; }
+  }
+  let advanceAnnouncementPending = 0;
+  async function announceAdvance(currentData, terminalData) {
+    advanceAnnouncementPending++;
+    try {
+      const generation=++announcementGeneration;
+      const name=currentData[1] || currentData[0] || '';
+      const route=rosenList[selectedValue] || [], index=mawashi, routeName=selectedValue;
+      await ttsReadingsReady;
+      const text=makeStopAnnouncement(name,route,index,routeName);
+      while(doorAnnouncementPending && generation===announcementGeneration) await new Promise(resolve=>setTimeout(resolve,100));
+      if(generation!==announcementGeneration) return;
+      const played=await playAdvanceChime();
+      if (!played || generation!==announcementGeneration) return;
+      if (currentData[14] && terminalData[14]) currentAnnounceAudio=playSound(`sound_file/${terminalData[14]}/${currentData[14]}`);
+      else speakStopAnnouncement(name,text);
+    } finally { advanceAnnouncementPending--; }
+  }
+  document.getElementById('audio-retry').addEventListener('click', event => {
+    event.stopPropagation();
+    unlockDisplayAudio().then(ok => { if(ok) playAdvanceChime(); });
+  });
+  document.addEventListener('pointerdown', () => {
+    if (pageMode === 'display' && (!displayAudioContext || displayAudioContext.state !== 'running')) unlockDisplayAudio();
+  });
+
+  function roleLink(mode) {
+    const targetPage = mode === 'display' ? 'ipad.html' : 'iphone.html';
+    const url = new URL(targetPage, location.href);
+    return url.href;
+  }
+  document.getElementById('login-button').addEventListener('click', async () => {
+    if (!window.firebaseBus) { document.getElementById('connection-status').textContent = 'firebase-config.js の設定が必要です'; return; }
+    if (pageMode === 'display') unlockDisplayAudio();
+    try {
+      await window.firebaseBus.login(document.getElementById('login-email').value, document.getElementById('login-password').value);
+      document.getElementById('connection-status').textContent = 'ログインしました。同期中です';
+    } catch (error) { document.getElementById('connection-status').textContent = `ログイン失敗: ${error.message}`; }
+  });
+  document.getElementById('logout-button').addEventListener('click', async () => {
+    await window.firebaseBus?.logout();
+    document.getElementById('connection-status').textContent = 'ログアウトしました';
+    document.getElementById('login-button').style.display = 'inline-block';
+    document.getElementById('logout-button').style.display = 'none';
+  });
+  const ttsVoiceSelect = document.getElementById('tts-voice');
+  function refreshTtsVoices() {
+    if (!('speechSynthesis' in window)) {
+      ttsVoiceSelect.disabled = true;
+      document.getElementById('connection-status').textContent = 'このブラウザーは音声読み上げに対応していません';
+      return;
+    }
+    const previous = localStorage.getItem('bus-display-tts-voice') || '';
+    const japaneseVoices = speechSynthesis.getVoices().filter(voice => voice.lang.toLowerCase().startsWith('ja'));
+    ttsVoiceSelect.innerHTML = '<option value="">端末の標準音声</option>';
+    for (const voice of japaneseVoices) {
+      const option = document.createElement('option');
+      option.value = voice.name;
+      option.textContent = `${voice.name} (${voice.lang})`;
+      ttsVoiceSelect.appendChild(option);
+    }
+    if ([...ttsVoiceSelect.options].some(option => option.value === previous)) ttsVoiceSelect.value = previous;
+  }
+  if ('speechSynthesis' in window) {
+    refreshTtsVoices();
+    speechSynthesis.addEventListener('voiceschanged', refreshTtsVoices);
+  }
+  ttsVoiceSelect.addEventListener('change', () => localStorage.setItem('bus-display-tts-voice', ttsVoiceSelect.value));
+
+  let ttsReadings = {};
+  const ttsReadingsReady = fetch('tts-readings.json').then(response => {
+    if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
+    return response.json();
+  }).then(values => { ttsReadings=values; }).catch(error => console.warn(error));
+  function ttsReading(value) {
+    const name=String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g,'').trim();
+    return ttsReadings[name] || name;
+  }
+  function makeStopAnnouncement(stopName, data = rosenList[selectedValue] || [], index = mawashi, routeName = selectedValue) {
+    const clean = value => String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g, '').trim();
+    const name = ttsReading(clean(stopName));
+    if (!name) return '';
+    const normal = 'つぎは、'+name+'、'+name+'、おおりのかたは、おしらせねがいます。';
+    if (data.length > 2 && index >= data.length - 3) {
+      return 'つぎは、しゅうてん、'+name+'、'+name+'でございます。ごじょうしゃ、ありがとうございました。';
+    }
+    if (index === 1) {
+      const metadata = data[data.length - 1] || [];
+      const company = String(routeName).split(' / ')[0];
+      const operator = company.includes('中央') ? 'ちゅうおうばす' : (company.includes('バス') ? ttsReading(company) : 'とうばす');
+      let system = String(metadata[14] || routeName).normalize('NFKC').match(/([東西南北]?[A-Za-z]?\d+(?:[-・]\d+)?)/)?.[1] || '';
+      system=system.replace(/^[東西南北]/, value => ({'東':'ひがし','西':'にし','南':'みなみ','北':'きた'}[value]));
+      const destination = ttsReading(data[data.length - 2]?.[1] || data[data.length - 2]?.[0] || metadata[1]);
+      return 'いつも、'+operator+'をごりよういただきまして、ありがとうございます。このばすは、'+(system ? system+'ばん、' : '')+destination+'ゆきでございます。'+normal;
+    }
+    return normal;
+  }
+
+  let currentSpeechUtterance = null;
+  function speakStopAnnouncement(stopName, text = makeStopAnnouncement(stopName)) {
+    if (!audioUnlocked || !('speechSynthesis' in window) || !stopName) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ja-JP';
+    utterance.rate = 0.92;
+    utterance.volume = 1;
+    const voiceName = ttsVoiceSelect.value || localStorage.getItem('bus-display-tts-voice');
+    const voice = speechSynthesis.getVoices().find(candidate => candidate.name === voiceName);
+    if (voice) utterance.voice = voice;
+    speechSynthesis.cancel();
+    currentSpeechUtterance = utterance;
+    utterance.onend = () => { if(currentSpeechUtterance === utterance) currentSpeechUtterance = null; };
+    utterance.onerror = event => {
+      if(currentSpeechUtterance === utterance) currentSpeechUtterance=null;
+      if (event.error === 'canceled' || event.error === 'interrupted') return;
+      const button=document.getElementById('audio-retry');
+      button.textContent='読み上げエラー: '+event.error+' · タップして音声を確認';
+      showAudioRetry();
+      console.error('Speech synthesis failed:',event.error);
+    };
+    speechSynthesis.speak(utterance);
+  }
+  function publishState(eventName = '') {
+    if (!window.firebaseBus || !selectedValue || !rosenList[selectedValue]) return;
+    const state = {
+      routeName: selectedValue,
+      routeData: rosenList[selectedValue],
+      mawashi,
+      stopRequested: document.getElementById('btn-stop').classList.contains('pushed'),
+      doorsOpen: document.getElementById('btn-close').disabled,
+      ttsVoice: localStorage.getItem('bus-display-tts-voice') || '',
+      eventName: eventName || '',
+      eventId: eventName ? `${Date.now()}-${Math.random().toString(16).slice(2)}` : '',
+      updatedAt: Date.now()
+    };
+    window.firebaseBus.send(state).catch(error => {
+      document.getElementById('connection-status').textContent = `送信エラー: ${error.message}`;
+    });
+  }
+
+  function applyRemoteState(state, writerClientId) {
+    if (!state || !Array.isArray(state.routeData)) return;
+    const routeChanged = selectedValue !== state.routeName;
+    const previousMawashi = mawashi;
+    for (const [name, value] of [['push_sound',state.audioSettings?.push],['door_buzzer',state.audioSettings?.door]]) {
+      if (value && /^[1-4]$/.test(String(value))) { const input=document.querySelector(`input[name="${name}"][value="${value}"]`); if(input) input.checked=true; }
+    }
+    if (typeof state.ttsVoice === 'string') {
+      localStorage.setItem('bus-display-tts-voice', state.ttsVoice);
+      if ([...ttsVoiceSelect.options].some(option => option.value === state.ttsVoice)) ttsVoiceSelect.value = state.ttsVoice;
+    }
+    rosenList[state.routeName] = state.routeData;
+    selectedValue = state.routeName;
+    mawashi = Number(state.mawashi) || 0;
+    const select = document.getElementById('rosen-select');
+    if (![...select.options].some(option => option.value === selectedValue)) {
+      const option = document.createElement('option');
+      option.value = selectedValue; option.textContent = selectedValue;
+      select.appendChild(option);
+    }
+    select.value = selectedValue;
+    if (routeChanged || previousMawashi !== mawashi) {
+      updateDisplay();
+      forceSwitchToScreen1();
+    }
+    document.getElementById('btn-next').disabled = false;
+    document.getElementById('btn-back').disabled = false;
+    document.getElementById('btn-stop').classList.toggle('pushed', Boolean(state.stopRequested));
+    document.body.classList.toggle('stop-active', Boolean(state.stopRequested));
+    document.getElementById('btn-open').disabled = Boolean(state.doorsOpen);
+    document.getElementById('btn-close').disabled = !state.doorsOpen;
+    const eventIsNew = state.eventId && state.eventId !== lastRemoteEventId;
+    const isRemoteWriter = writerClientId !== window.firebaseBus?.clientId;
+    if (hasInitialSnapshot && eventIsNew && isRemoteWriter) {
+      if (state.eventName === 'nextStop') {
+        triggerNextStopScreen();
+        const sound=document.querySelector('input[name="push_sound"]:checked').value;
+        if(audioUnlocked && sound!=='4') playSound('data/getoffpush'+sound+'.wav');
+        if(audioUnlocked) setTimeout(()=>playNextStopAnnounce(state.routeData[state.routeData.length-1]?.[1] || ''),1500);
+      }
+      if (state.eventName === 'depart') {
+        triggerDepartScreen();
+        playDoorClosingAnnouncement();
+      }
+      if (state.eventName === 'open') {
+        cancelDoorAnnouncement();
+        forceSwitchToScreen1();
+        const sound=document.querySelector('input[name="door_buzzer"]:checked').value;
+        if(audioUnlocked) playSound(sound==='1'?'data/taihei_door_open.wav':'data/buzzer'+sound+'.wav');
+      }
+      if (state.eventName === 'next') {
+        stopBroadcast();
+        const currentData = state.routeData[mawashi + 1] || [];
+        const terminalData = state.routeData[state.routeData.length - 1] || [];
+        announceAdvance(currentData, terminalData);
+      }
+      if (state.eventName === 'back') { stopBroadcast(); playAdvanceChime(); }
+    }
+    if (state.eventId) lastRemoteEventId = state.eventId;
+    hasInitialSnapshot = true;
+  }
+
+  function connectRealtimeRoom() {
+    if (!window.firebaseBus) {
+      document.getElementById('connection-status').textContent = 'Firebase設定を確認してください (firebase-config.js)';
+      return;
+    }
+    hasInitialSnapshot = false;
+    window.firebaseBus.connect((state, writerClientId) => {
+      if (pageMode === 'display' || !selectedValue) applyRemoteState(state, writerClientId);
+    })
+      .then(() => {
+        document.getElementById('connection-status').textContent = 'Firebase同期中';
+        if (pageMode === 'controller' && selectedValue) setTimeout(() => publishState(), 300);
+      })
+      .catch(error => { document.getElementById('connection-status').textContent = `Firebase接続エラー: ${error.message}`; });
+  }
+  window.addEventListener('firebase-authenticated', () => {
+    document.getElementById('login-button').style.display = 'none';
+    document.getElementById('logout-button').style.display = 'inline-block';
+    if (pageMode === 'display') document.body.classList.add('authenticated');
+    if (!displayAudioContext || displayAudioContext.state !== 'running') showAudioRetry();
+    connectRealtimeRoom();
+  });
+
+  document.addEventListener('click', event => {
+    if (pageMode !== 'display' || !document.body.classList.contains('authenticated')) return;
+    if (event.target.closest('#dp-screen, #audio-retry')) return;
+    const stopButton = document.getElementById('btn-stop');
+    if (!selectedValue || !rosenList[selectedValue] || stopButton.classList.contains('pushed')) return;
+    document.body.classList.add('stop-active');
+    stopButton.click();
+  });
+
+  // 音声のチャンネル管理（Pythonの Pygame mixer に相当）
+  let doorAnnouncementGeneration=0;
+  let doorAnnouncementPending=false;
+  let doorAudioSource=null;
+  const doorAudioBuffers=new Map();
+  function departureWarningClip() {
+    const route=rosenList[selectedValue] || [];
+    const depot=String(route[route.length-1]?.[1] || '').trim();
+    // Python car/display versions share the Ishikari voice for Kita depot.
+    return ({
+      '石狩営業所':'data/door_close_石狩営業所.wav',
+      '北営業所':'data/door_close_石狩営業所.wav',
+      '東営業所':'data/door_close_東営業所.wav',
+      '新川営業所':'data/door_close_新川営業所.wav',
+      '白石営業所':'data/door_close_白石営業所.wav'
+    })[depot] || 'data/door_close_石狩営業所.wav';
+  }
+  function cancelDoorAnnouncement() {
+    doorAnnouncementGeneration++;
+    doorAnnouncementPending=false;
+    if(doorAudioSource) { try{doorAudioSource.stop();}catch{} doorAudioSource=null; }
+  }
+  async function playDoorClip(path,generation) {
+    if(!displayAudioContext || displayAudioContext.state!=='running') throw new Error('音声を有効にしてください');
+    let buffer=doorAudioBuffers.get(path);
+    if(!buffer) {
+      const response=await fetch(path);
+      if(!response.ok) throw new Error('ドア音声を読み込めません: '+path);
+      buffer=await displayAudioContext.decodeAudioData(await response.arrayBuffer());
+      doorAudioBuffers.set(path,buffer);
+    }
+    if(generation!==doorAnnouncementGeneration) return;
+    await new Promise(resolve=>{
+      const source=displayAudioContext.createBufferSource();source.buffer=buffer;connectAnnouncementAudio(source,/door_close_/.test(path)?2:1);doorAudioSource=source;
+      source.onended=()=>{if(doorAudioSource===source)doorAudioSource=null;resolve();};source.start();
+    });
+  }
+  async function playDoorClosingAnnouncement() {
+    cancelDoorAnnouncement();
+    const generation=doorAnnouncementGeneration;
+    const sound=document.querySelector('input[name="door_buzzer"]:checked').value;
+    const warning=departureWarningClip();
+    doorAnnouncementPending=true;
+    try {
+      await playDoorClip(sound==='1'?'data/taihei_door_close.wav':'data/buzzer'+sound+'.wav',generation);
+      if(generation===doorAnnouncementGeneration) await playDoorClip(warning,generation);
+    } catch(error) {console.error(error);showAudioRetry();}
+    finally {if(generation===doorAnnouncementGeneration)doorAnnouncementPending=false;}
+  }
+
+  let currentAnnounceAudio = null; // 車内放送（music）専用チャンネル
+
+  // 効果音やチャイム（Sound）は独立して鳴らす
+  function connectAnnouncementAudio(source, volume=2) {
+    const gain=displayAudioContext.createGain();gain.gain.value=volume;
+    const limiter=displayAudioContext.createDynamicsCompressor();
+    limiter.threshold.value=-3;limiter.knee.value=0;limiter.ratio.value=20;limiter.attack.value=.003;limiter.release.value=.15;
+    source.connect(gain);gain.connect(limiter);limiter.connect(displayAudioContext.destination);
+  }
+  function playSound(path) {
+    const audio = new Audio(path);
+    if(displayAudioContext?.state==='running' && (path.startsWith('sound_file/') || /door_close_|tugitomarimasu_/.test(path))) {
+      connectAnnouncementAudio(displayAudioContext.createMediaElementSource(audio));
+    }
+    audio.play().catch(e => console.log("音声未検出(スキップ): " + path));
+    return audio;
+  }
+
+  // ★放送のみを強制停止する処理
+  function stopBroadcast() {
+    announcementGeneration++;
+    currentSpeechUtterance=null;
+    stopRequestGeneration++;
+    stopRequestQueued=false;
+    if(stopRequestSource) { try { stopRequestSource.stop(); } catch {} stopRequestSource=null; }
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    if (currentAnnounceAudio) {
+      currentAnnounceAudio.pause();
+      currentAnnounceAudio.currentTime = 0;
+      currentAnnounceAudio = null;
+    }
+  }
+
+  // CSV読み込み処理 (ファイル複数選択とフォルダ選択の両方に対応)
+  function parseCsvLine(line) {
+    const fields = [];
+    let value = '', quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const character = line[i];
+      if (character === '"') {
+        if (quoted && line[i + 1] === '"') { value += '"'; i++; }
+        else quoted = !quoted;
+      } else if (character === ',' && !quoted) {
+        fields.push(value); value = '';
+      } else value += character;
+    }
+    fields.push(value);
+    return fields;
+  }
+  function parseCsvText(text) {
+    return text.replace(/^\uFEFF/, '').split(/\r\n|\n/).filter(line => line.trim() !== '').map(parseCsvLine);
+  }
+
+  function loadCsvFiles(files) {
+    for (let file of files) {
+      if (!file.name.toLowerCase().endsWith('.csv')) continue;
+      const reader = new FileReader();
+      reader.readAsText(file, 'utf-8');
+      reader.onload = (event) => {
+        const text = event.target.result;
+        const data = parseCsvText(text);
+        const fileName = file.name.replace(/\.csv$/i, '');
+        const folderName = (file.webkitRelativePath || '').split('/').slice(0, -1).filter(Boolean).join(' / ');
+        const routeKey = folderName ? `${folderName} / ${fileName}` : fileName;
+        rosenList[routeKey] = data; 
+        
+        const option = document.createElement('option');
+        option.value = routeKey; option.textContent = routeKey;
+        document.getElementById('rosen-select').appendChild(option);
+        
+        if (document.getElementById('rosen-select').options.length === 2) {
+          document.getElementById('rosen-select').value = routeKey;
+          selectedValue = routeKey;
+          mawashi = 0;
+          updateDisplay(); 
+          document.getElementById('btn-next').disabled = false;
+          document.getElementById('btn-back').disabled = false;
+        }
+        if (selectedValue === routeKey) publishState();
+      };
+    }
+  }
+  document.getElementById('csv-input').addEventListener('change', e => loadCsvFiles(e.target.files));
+  document.getElementById('csv-folder-input').addEventListener('change', e => loadCsvFiles(e.target.files));
+
+  const bundledRoutePaths = new Map();
+  async function loadBundledRoute(routeName) {
+    if (rosenList[routeName]) return rosenList[routeName];
+    const relativePath = bundledRoutePaths.get(routeName);
+    if (!relativePath) return null;
+    const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
+    const response = await fetch(csvUrl);
+    if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
+    const text = await response.text();
+    rosenList[routeName] = parseCsvText(text);
+    return rosenList[routeName];
+  }
+
+  async function loadBundledRoutes() {
+    try {
+      const manifestResponse = await fetch('routes/index.json', { cache: 'no-store' });
+      if (!manifestResponse.ok) return;
+      const manifest = await manifestResponse.json();
+      const select = document.getElementById('rosen-select');
+      for (const entry of manifest.routes || []) {
+        bundledRoutePaths.set(entry.name, entry.path);
+        if (![...select.options].some(option => option.value === entry.name)) {
+          const option = document.createElement('option');
+          option.value = entry.name; option.textContent = entry.name;
+          select.appendChild(option);
+        }
+      }
+      const firstRoute = (manifest.routes || [])[0];
+      if (!selectedValue && firstRoute) {
+        selectedValue = firstRoute.name;
+        select.value = selectedValue;
+        await loadBundledRoute(selectedValue);
+        mawashi = 0;
+        updateDisplay();
+        document.getElementById('btn-next').disabled = false;
+        document.getElementById('btn-back').disabled = false;
+        publishState();
+      }
+    } catch (error) {
+      console.warn('Bundled routes could not be loaded:', error);
+    }
+  }
+  loadBundledRoutes();
+
+  document.getElementById('rosen-select').addEventListener('change', async (e) => {
+    selectedValue = e.target.value; mawashi = 0;
+    if (selectedValue) {
+      try {
+        await loadBundledRoute(selectedValue);
+        updateDisplay(); forceSwitchToScreen1();
+        document.getElementById('btn-next').disabled = false;
+        document.getElementById('btn-back').disabled = false;
+        publishState();
+      } catch (error) {
+        document.getElementById('connection-status').textContent = error.message;
+      }
+    }
+  });
+
+  // 描画更新処理
+  function updateDisplay() {
+    if (!selectedValue || !rosenList[selectedValue]) return;
+    const data = rosenList[selectedValue];
+    if (mawashi + 1 >= data.length) return; 
+
+    document.getElementById('mawashi-display').textContent = mawashi;
+    const currentData = data[mawashi + 1];
+
+    // ★Python版の size_adjustment 処理を移植（文字数が11以上の時は縮小）
+    const currentLength = (currentData[1] || "").length;
+    let textSize = 35;
+    if (currentLength >= 11) {
+        textSize = Math.floor(35 * 11 / currentLength);
+    }
+    const fontSizeCalc = `calc(${textSize} * var(--pt-ratio) / var(--base-w) * 100cqw)`;
+    
+    const mainDestText = document.getElementById('main-dest-text');
+    mainDestText.textContent = currentData[1] || ""; 
+    mainDestText.style.fontSize = fontSizeCalc;
+
+    const sc2NextStopJa = document.getElementById('sc2-next-stop-ja');
+    const metadata=data[data.length-1] || [];
+    // Original 16-column CSV: route summary is column 16. Columns 17/18 are now coordinates.
+    const initialSummary=metadata[15] || selectedValue;
+    const initialLength=Array.from(initialSummary).length;
+    const initialTextSize=initialLength>=12 ? Math.floor(35*12/initialLength+.3) : 35;
+    sc2NextStopJa.textContent = mawashi===0 ? initialSummary : (currentData[1] || '');
+    sc2NextStopJa.style.fontSize = mawashi===0 ? `calc(${initialTextSize} * var(--pt-ratio) / var(--base-w) * 100cqw)` : fontSizeCalc;
+    
+    const nextBoxText = document.getElementById('next-box-text');
+    if (data.length <= mawashi + 3 && mawashi > 0) {
+      nextBoxText.innerHTML = "終<br>点";
+    } else {
+      nextBoxText.innerHTML = "次<br>は";
+    }
+
+    document.getElementById('scroll-txt').textContent = currentData[9] || "";
+    idou = baseW; 
+
+    const grid = document.getElementById('fare-grid');
+    grid.innerHTML = '';
+    let counter = 1, fareCount = 0; 
+    for (let i3 = 0; i3 < 2; i3++) {
+      for (let i2 = 0; i2 < 3; i2++) {
+        const cell = document.createElement('div');
+        cell.className = 'abs fare-cell';
+        cell.style.left = `calc(${3 + i2 * 198} / ${baseW} * 100%)`;
+        cell.style.top = `calc(${96 + i3 * 96.5} / ${baseH} * 100%)`;
+        
+        let val = currentData[3 + fareCount] || ""; 
+        if (fareCount === 0 && val !== "") {
+          cell.innerHTML = `<div class="abs cell-top flex-center"><span style="font-size: calc(10 * var(--pt-ratio) / var(--base-w) * 100cqw); margin-right:5px; color:#fff;">券なし</span><span class="cell-no">${counter}</span></div><div class="abs cell-bottom flex-center"><span class="cell-val">${val}</span></div>`;
+        } else {
+          cell.innerHTML = `<div class="abs cell-top flex-center"><span class="cell-no">${counter}</span></div><div class="abs cell-bottom flex-center"><span class="cell-val">${val}</span></div>`;
+        }
+        grid.appendChild(cell); counter++; fareCount++;
+      }
+    }
+
+    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 
+
+    for (let n_text = 0; n_text < 4; n_text++) {
+      let targetRow = null;
+      if (data.length <= mawashi + 6) {
+        targetRow = data[4 - n_text + mawashi];
+      } else if (mawashi === 0) {
+        if (n_text === 0) targetRow = data[data.length - 2];
+        else targetRow = data[5 - n_text + mawashi];
+      } else {
+        if (n_text === 0) targetRow = data[data.length - 2];
+        else targetRow = data[4 - n_text + mawashi];
+      }
+
+      if (targetRow) {
+        document.getElementById(`sc3-ja-${n_text}`).textContent = targetRow[0] || "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = targetRow[2] || "";
+      } else {
+        document.getElementById(`sc3-ja-${n_text}`).textContent = "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = "";
+      }
+    }
+    if(mawashi===0 && currentScNo===0) forceSwitchToScreen1();
+  }
+
+  // ==========================================
+  // アニメーション・画面切り替え管理
+  // ==========================================
+  const allMainScreens = document.querySelectorAll('#dp-screen .screen');
+  const allInterruptScreens = document.querySelectorAll('#dp-screen .interrupt-screen');
+  const mainScreens = [document.getElementById('screen1'), document.getElementById('screen2'), document.getElementById('screen3')];
+  const waitTimes = [8000, 6000, 6000];
+  let currentScNo = 0;
+  let screenTimer = null;
+  const move_sw = 5500; 
+
+  let lcdBlackoutTimer=null;
+  function hideAllScreens() {
+    const blackout=document.getElementById('lcd-blackout');
+    clearTimeout(lcdBlackoutTimer);
+    blackout.hidden=false;
+    lcdBlackoutTimer=setTimeout(()=>{blackout.hidden=true;},100);
+    allMainScreens.forEach(s => s.classList.remove('active'));
+    allInterruptScreens.forEach(s => s.classList.remove('active'));
+  }
+
+  function switchScreen() {
+    hideAllScreens();
+    currentScNo = (currentScNo + 1) % mainScreens.length;
+    if(mawashi===0 && currentScNo===0) currentScNo=1;
+    mainScreens[currentScNo].classList.add('active');
+    screenTimer = setTimeout(switchScreen, waitTimes[currentScNo]);
+  }
+
+  function forceSwitchToScreen1() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    currentScNo = mawashi===0 ? 1 : 0;
+    mainScreens[currentScNo].classList.add('active');
+    screenTimer = setTimeout(switchScreen, waitTimes[currentScNo]);
+  }
+
+  function triggerNextStopScreen() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    document.getElementById('screen-ns1').classList.add('active');
+    setTimeout(() => {
+      hideAllScreens();
+      document.getElementById('screen-ns2').classList.add('active');
+      setTimeout(forceSwitchToScreen1, move_sw);
+    }, move_sw);
+  }
+
+  function triggerDepartScreen() {
+    clearTimeout(screenTimer);
+    hideAllScreens();
+    document.getElementById('screen-d1').classList.add('active');
+    setTimeout(() => {
+      hideAllScreens();
+      document.getElementById('screen-d2').classList.add('active');
+      setTimeout(forceSwitchToScreen1, move_sw);
+    }, move_sw);
+  }
+
+  screenTimer = setTimeout(switchScreen, waitTimes[0]);
+
+  let idou = baseW;
+  function animateScroll() {
+    idou -= 2; 
+    const scrollTxt = document.getElementById('scroll-txt');
+    const dpRect = document.getElementById('dp-screen').getBoundingClientRect();
+    const rect = scrollTxt.getBoundingClientRect();
+    if (idou < -((rect.width / dpRect.width) * baseW)) idou = baseW;
+    scrollTxt.style.left = `calc(${idou} / ${baseW} * 100%)`;
+    requestAnimationFrame(animateScroll);
+  }
+  animateScroll();
+
+  // ★「次止まります」アナウンスの延期監視処理（キュー）
+  let stopRequestQueued=false;
+  let stopRequestGeneration=0;
+  let stopRequestSource=null;
+  const stopClipBuffers=new Map();
+  async function playStopClip(path,generation) {
+    if (!displayAudioContext || displayAudioContext.state!=='running') throw new Error('音声を有効にしてください');
+    let buffer=stopClipBuffers.get(path);
+    if(!buffer) {
+      const response=await fetch(path);
+      if(!response.ok) throw new Error('停車案内音声を読み込めません: '+path);
+      buffer=await displayAudioContext.decodeAudioData(await response.arrayBuffer());
+      stopClipBuffers.set(path,buffer);
+    }
+    if(generation!==stopRequestGeneration) return;
+    await new Promise(resolve=>{
+      const source=displayAudioContext.createBufferSource();
+      stopRequestSource=source; source.buffer=buffer; connectAnnouncementAudio(source);
+      source.onended=()=>{if(stopRequestSource===source) stopRequestSource=null;resolve();};
+      source.start();
+    });
+  }
+  function speakStopRequest(generation) {
+    if(!('speechSynthesis' in window)) return Promise.reject(new Error('読み上げに対応していません'));
+    if(generation!==stopRequestGeneration) return Promise.resolve(false);
+    return new Promise((resolve,reject)=>{
+      const utterance=new SpeechSynthesisUtterance('つぎ、とまります。');
+      utterance.lang='ja-JP'; utterance.rate=.92; utterance.volume=1;
+      const voiceName=ttsVoiceSelect.value || localStorage.getItem('bus-display-tts-voice');
+      const voice=speechSynthesis.getVoices().find(candidate=>candidate.name===voiceName);
+      if(voice) utterance.voice=voice;
+      currentSpeechUtterance=utterance;
+      utterance.onend=()=>{if(currentSpeechUtterance===utterance)currentSpeechUtterance=null;resolve(generation===stopRequestGeneration);};
+      utterance.onerror=event=>{
+        if(currentSpeechUtterance===utterance)currentSpeechUtterance=null;
+        if(generation!==stopRequestGeneration || event.error==='canceled' || event.error==='interrupted') resolve(false);
+        else reject(new Error('停車案内の読み上げエラー: '+event.error));
+      };
+      speechSynthesis.speak(utterance);
+    });
+  }
+  function depotStopRequestClip() {
+    const route=rosenList[selectedValue] || [];
+    const depot=String(route[route.length-1]?.[1] || '').trim();
+    // Legacy CSV: final row, column 2 is the audio depot, not the destination.
+    return ({
+      '石狩営業所':'data/stop-request.wav',
+      '新川営業所':'data/tugitomarimasu_新川営業所.wav',
+      '東営業所':'data/tugitomarimasu_東営業所.wav',
+      '白石営業所':'data/tugitomarimasu_白石営業所.wav'
+    })[depot] || null;
+  }
+  function playNextStopAnnounce() {
+    if(stopRequestQueued) return;
+    stopRequestQueued=true;
+    const generation=++stopRequestGeneration;
+    const requestClip=depotStopRequestClip();
+    async function waitForAnnouncement() {
+      if(generation!==stopRequestGeneration) return;
+      if(!document.getElementById('btn-stop').classList.contains('pushed')) { stopRequestQueued=false;return; }
+      const recordedBusy=currentAnnounceAudio && !currentAnnounceAudio.paused && !currentAnnounceAudio.ended;
+      const speechBusy=currentSpeechUtterance || ('speechSynthesis' in window && (speechSynthesis.speaking || speechSynthesis.pending));
+      if(advanceAnnouncementPending || doorAnnouncementPending || recordedBusy || speechBusy) { setTimeout(waitForAnnouncement,100);return; }
+      try {
+        let spoken;
+        if(requestClip) { await playStopClip(requestClip,generation);spoken=generation===stopRequestGeneration; }
+        else spoken=await speakStopRequest(generation);
+        if(spoken && generation===stopRequestGeneration) await playStopClip('data/stop-safety.wav',generation);
+      } catch(error) { console.error(error);showAudioRetry(); }
+      finally { if(generation===stopRequestGeneration) stopRequestQueued=false; }
+    }
+    waitForAnnouncement();
+  }
+
+  // ==========================================
+  // ボタン操作
+  // ==========================================
+  document.getElementById('btn-next').addEventListener('click', () => {
+    const data = rosenList[selectedValue];
+    if (data && mawashi < data.length - 2) { 
+      stopBroadcast(); // ★前の放送を強制停止
+      mawashi++;
+      updateDisplay();
+      forceSwitchToScreen1(); 
+      document.getElementById('btn-stop').classList.remove('pushed');
+      
+      const currentData = data[mawashi + 1];
+      publishState('next');
+    }
+  });
+
+  document.getElementById('btn-back').addEventListener('click', () => {
+    if (mawashi > 0) {
+      stopBroadcast(); // ★前の放送を強制停止
+      mawashi--;
+      updateDisplay();
+      forceSwitchToScreen1(); 
+      document.getElementById('btn-stop').classList.remove('pushed');
+      currentAnnounceAudio = playSound(`data/nextpush.wav`);
+      publishState('back');
+    }
+  });
+
+  const btnStop = document.getElementById('btn-stop');
+  btnStop.addEventListener('click', () => {
+    if (!btnStop.classList.contains('pushed')) {
+      btnStop.classList.add('pushed');
+      
+      const pushSoundVal = document.querySelector('input[name="push_sound"]:checked').value;
+      if (pushSoundVal !== "4") playSound(`data/getoffpush${pushSoundVal}.wav`);
+      
+      triggerNextStopScreen(); 
+      
+      // ボタンを押した1.5秒後からキュー監視を開始
+      setTimeout(() => {
+        const destName = rosenList[selectedValue][rosenList[selectedValue].length - 1][1];
+        playNextStopAnnounce(destName);
+      }, 1500);
+      publishState('nextStop');
+    }
+  });
+
+  const btnOpen = document.getElementById('btn-open');
+  const btnClose = document.getElementById('btn-close');
+  
+  btnOpen.addEventListener('click', () => {
+    cancelDoorAnnouncement();
+    btnOpen.disabled = true; btnClose.disabled = false;
+    btnStop.classList.remove('pushed');
+    forceSwitchToScreen1(); 
+    clearTimeout(screenTimer); 
+    
+    const doorBuzzerVal = document.querySelector('input[name="door_buzzer"]:checked').value;
+    if (doorBuzzerVal === "1") playSound(`data/taihei_door_open.wav`);
+    else playSound(`data/buzzer${doorBuzzerVal}.wav`);
+    publishState('open');
+  });
+
+  btnClose.addEventListener('click', () => {
+    btnClose.disabled=true;btnOpen.disabled=false;
+    playDoorClosingAnnouncement();
+    triggerDepartScreen();publishState('depart');
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    btnStop.classList.remove('pushed');
+    publishState('reset');
+  });
+
+  document.getElementById('size-slider').addEventListener('input', (e) => {
+    document.getElementById('dp-screen').style.maxWidth = `${e.target.value}px`;
+  });
+
+  let gpsWatchId = null;
+  let gpsLastAdvanceAt = 0;
+  let gpsLastAdvancedIndex = -1;
+  function distanceMeters(lat1, lon1, lat2, lon2) {
+    const rad = degrees => degrees * Math.PI / 180;
+    const dLat = rad(lat2 - lat1), dLon = rad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  document.getElementById('gps-start').addEventListener('click', () => {
+    const status = document.getElementById('gps-status');
+    if (!navigator.geolocation) { status.textContent = 'このブラウザーは位置情報に対応していません'; return; }
+    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+    status.textContent = 'GPS位置を取得中です…';
+    gpsWatchId = navigator.geolocation.watchPosition(position => {
+      const { latitude, longitude, accuracy } = position.coords;
+      status.textContent = `現在地 ${latitude.toFixed(5)}, ${longitude.toFixed(5)} · 精度 約${Math.round(accuracy)}m`;
+      const route = rosenList[selectedValue];
+      const targetIndex = mawashi + 2;
+      const target = route && route[targetIndex];
+      const doorsClosed = document.getElementById('btn-close').disabled;
+      if (!document.getElementById('gps-auto').checked || !target || !target[16] || !target[17] || !doorsClosed) return;
+      if (gpsLastAdvancedIndex === mawashi || Date.now() - gpsLastAdvanceAt < 15000) return;
+      const distance = distanceMeters(latitude, longitude, Number(target[16]), Number(target[17]));
+      const radius = Math.max(10, Number(document.getElementById('gps-radius').value) || 45);
+      if (distance <= radius) {
+        gpsLastAdvancedIndex = mawashi;
+        gpsLastAdvanceAt = Date.now();
+        status.textContent = `停留所検知: ${target[0]} (${Math.round(distance)}m) · 自動進行`;
+        document.getElementById('btn-next').click();
+      }
+    }, error => {
+      const messages = { 1: '位置情報の許可が必要です', 2: '現在地を取得できません', 3: '位置情報の取得がタイムアウトしました' };
+      status.textContent = messages[error.code] || error.message;
+    }, { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 });
+  });
+  document.getElementById('gps-stop').addEventListener('click', () => {
+    if (gpsWatchId !== null) navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+    document.getElementById('gps-status').textContent = 'GPS停止中';
+  });
+</script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { firebaseConfig } from './firebase-config.js';
+
+  const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_')
+    && firebaseConfig.databaseURL && !firebaseConfig.databaseURL.startsWith('PASTE_');
+  if (configured) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      document.getElementById('login-button').disabled = true;
+      try { await setPersistence(auth, browserLocalPersistence); }
+      finally { document.getElementById('login-button').disabled = false; }
+      const db = getDatabase(app);
+      const clientId = crypto.randomUUID();
+
+      let unsubscribe = null;
+      window.firebaseBus = {
+        clientId,
+        async login(userId, password) {
+          const identifier = String(userId || '').trim();
+          if (!identifier) throw new Error('ユーザーIDを入力してください');
+          const email = identifier.includes('@') ? identifier : `${identifier.toLowerCase()}@bus-display.invalid`;
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
+          } catch (error) {
+            if (!identifier.includes('@') && ['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(error.code)) {
+              throw new Error(`Firebase Authenticationの登録メールを「${email}」に設定し、入力IDと同じパスワードで登録してください。`);
+            }
+            throw error;
+          }
+
+        },
+        async logout() {
+          if (unsubscribe) unsubscribe();
+          await signOut(auth);
+        },
+        connect(callback) {
+          if (unsubscribe) unsubscribe();
+          const stateRef = ref(db, 'privateBus/state');
+          unsubscribe = onValue(stateRef, snapshot => {
+            const value = snapshot.val();
+            if (value) callback(value.state, value.writerClientId);
+          });
+          window.firebaseBus.send = state => set(stateRef, { state, writerClientId: clientId });
+          return Promise.resolve();
+        },
+        send: () => Promise.reject(new Error('ログインして同期を開始してください'))
+      };
+      onAuthStateChanged(auth, user => {
+        if (user) {
+          document.getElementById('login-password').value = '';
+          window.dispatchEvent(new Event('firebase-authenticated'));
+        } else {
+          if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+          window.firebaseBus.send = () => Promise.reject(new Error('ログインしてください'));
+          document.body.classList.remove('authenticated', 'stop-active');
+          document.body.classList.add('auth-required');
+          document.getElementById('login-button').style.display = 'inline-block';
+          document.getElementById('logout-button').style.display = 'none';
+          const close = document.getElementById('login-close');
+          if (close) close.hidden = true;
+          document.getElementById('connection-status').textContent = 'ユーザーIDとパスワードでログインしてください';
+        }
+      }, error => { document.getElementById('connection-status').textContent = 'ログイン状態の復元に失敗しました: ' + error.message; });
+    } catch (error) {
+      document.getElementById('connection-status').textContent = `Firebase初期化エラー: ${error.message}`;
+    }
+  } else {
+    document.getElementById('connection-status').textContent = 'firebase-config.js にFirebaseのWeb設定を入力してください';
+  }
+</script>
+</body>
+</html>
+
