@@ -200,7 +200,9 @@ def make_csv_rows(
     short_name = (route.get("route_short_name") or route.get("route_long_name") or route.get("route_id") or "route").strip()
     # Display the actual terminal stop name; GTFS headsign may contain a phonetic katakana label.
     destination = clean_stop_name(stop_names[-1])
-    route_label = f"{short_name}◆{stop_names[0]}→{destination}"
+    system_match = re.match(r"^([^0-9０-９]*[0-9０-９]+(?:[-・][0-9０-９]+)?)", short_name)
+    display_system = system_match.group(1) if system_match else short_name
+    route_label = f"{display_system}◆{stop_names[0]}→{destination}"
     terminal = [""] * 18
     terminal[1] = stop_names[-1]
     terminal[14] = short_name

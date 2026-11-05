@@ -503,11 +503,11 @@
   }
   const bundledRoutePaths = new Map();
   async function loadBundledRoute(routeName) {
-    if (rosenList[routeName]) return rosenList[routeName];
+
     const relativePath = bundledRoutePaths.get(routeName);
     if (!relativePath) return null;
     const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
-    const response = await fetch(csvUrl);
+    const response = await fetch(csvUrl, { cache: 'no-store' });
     if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
     const text = await response.text();
     rosenList[routeName] = parseCsvText(text);
@@ -625,7 +625,10 @@
     const sc2NextStopJa = document.getElementById('sc2-next-stop-ja');
     const metadata=data[data.length-1] || [];
     // Original 16-column CSV: route summary is column 16. Columns 17/18 are now coordinates.
-    const initialSummary=metadata[15] || selectedValue;
+    const initialSummary=String(metadata[15] || selectedValue).replace(/^([^◆♦]+)[◆♦]/, (_, system) => {
+      const code = system.match(/^([^0-9０-９]*[0-9０-９]+(?:[-・][0-9０-９]+)?)/)?.[1];
+      return (code || system) + '◆';
+    });
     const initialLength=Array.from(initialSummary).length;
     const initialTextSize=initialLength>=12 ? Math.floor(35*12/initialLength+.3) : 35;
     sc2NextStopJa.textContent = mawashi===0 ? initialSummary : (currentData[1] || '');
