@@ -360,12 +360,13 @@
       const text=makeStopAnnouncement(name,route,index,routeName);
       while(doorAnnouncementPending && generation===announcementGeneration) await new Promise(resolve=>setTimeout(resolve,100));
       if(generation!==announcementGeneration) return;
-      const played=await playAdvanceChime();
-      if (!played || generation!==announcementGeneration) return;
       if (currentData[14] && terminalData[14]) {
         await playRecordedAnnouncement(`sound_file/${terminalData[14]}/${currentData[14]}`, generation, name, text);
+      } else {
+        const played = await playAdvanceChime();
+        if (!played || generation !== announcementGeneration) return;
+        speakStopAnnouncement(name, text);
       }
-      else speakStopAnnouncement(name,text);
     } finally { advanceAnnouncementPending--; }
   }
   document.getElementById('audio-retry').addEventListener('click', event => {
@@ -727,7 +728,8 @@
       button.textContent = '録音放送エラー: ' + error.message;
       showAudioRetry();
       console.error(path, error);
-      speakStopAnnouncement(name, text);
+      const played = await playAdvanceChime();
+      if (played && generation === announcementGeneration && !playback.paused) speakStopAnnouncement(name, text);
     }
   }
   function playSound(path) {
