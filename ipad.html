@@ -555,12 +555,13 @@
         if(audioUnlocked) playSound(sound==='1'?'data/taihei_door_open.wav':'data/buzzer'+sound+'.wav');
       }
       if (state.eventName === 'next') {
+        cancelDoorAnnouncement();
         stopBroadcast();
         const currentData = state.routeData[mawashi + 1] || [];
         const terminalData = state.routeData[state.routeData.length - 1] || [];
         announceAdvance(currentData, terminalData);
       }
-      if (state.eventName === 'back') { stopBroadcast(); playAdvanceChime(); }
+      if (state.eventName === 'back') { cancelDoorAnnouncement(); stopBroadcast(); playAdvanceChime(); }
     }
     if (state.eventId) lastRemoteEventId = state.eventId;
     hasInitialSnapshot = true;
@@ -1001,10 +1002,10 @@
     clearTimeout(screenTimer);
     hideAllScreens();
     document.getElementById('screen-ns1').classList.add('active');
-    setTimeout(() => {
+    screenTimer = setTimeout(() => {
       hideAllScreens();
       document.getElementById('screen-ns2').classList.add('active');
-      setTimeout(forceSwitchToScreen1, move_sw);
+      screenTimer = setTimeout(forceSwitchToScreen1, move_sw);
     }, move_sw);
   }
 
@@ -1012,10 +1013,10 @@
     clearTimeout(screenTimer);
     hideAllScreens();
     document.getElementById('screen-d1').classList.add('active');
-    setTimeout(() => {
+    screenTimer = setTimeout(() => {
       hideAllScreens();
       document.getElementById('screen-d2').classList.add('active');
-      setTimeout(forceSwitchToScreen1, move_sw);
+      screenTimer = setTimeout(forceSwitchToScreen1, move_sw);
     }, move_sw);
   }
 
@@ -1113,6 +1114,7 @@
   document.getElementById('btn-next').addEventListener('click', () => {
     const data = rosenList[selectedValue];
     if (data && mawashi < data.length - 2) { 
+      cancelDoorAnnouncement();
       stopBroadcast(); // ★前の放送を強制停止
       mawashi++;
       updateDisplay();
@@ -1126,6 +1128,7 @@
 
   document.getElementById('btn-back').addEventListener('click', () => {
     if (mawashi > 0) {
+      cancelDoorAnnouncement();
       stopBroadcast(); // ★前の放送を強制停止
       mawashi--;
       updateDisplay();

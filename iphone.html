@@ -703,10 +703,10 @@
     clearTimeout(screenTimer);
     hideAllScreens();
     document.getElementById('screen-ns1').classList.add('active');
-    setTimeout(() => {
+    screenTimer = setTimeout(() => {
       hideAllScreens();
       document.getElementById('screen-ns2').classList.add('active');
-      setTimeout(forceSwitchToScreen1, move_sw);
+      screenTimer = setTimeout(forceSwitchToScreen1, move_sw);
     }, move_sw);
   }
 
@@ -714,10 +714,10 @@
     clearTimeout(screenTimer);
     hideAllScreens();
     document.getElementById('screen-d1').classList.add('active');
-    setTimeout(() => {
+    screenTimer = setTimeout(() => {
       hideAllScreens();
       document.getElementById('screen-d2').classList.add('active');
-      setTimeout(forceSwitchToScreen1, move_sw);
+      screenTimer = setTimeout(forceSwitchToScreen1, move_sw);
     }, move_sw);
   }
 
