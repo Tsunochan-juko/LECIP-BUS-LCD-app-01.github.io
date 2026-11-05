@@ -521,7 +521,7 @@
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');
       const groups = {};
-      for (const [key, label] of [['current', '現行路線'], ['recorded', '録音放送付き路線'], ['archive', '過去路線アーカイブ']]) {
+      for (const [key, label] of [['current', '現行路線'], ['archive', '過去路線アーカイブ']]) {
         const group = document.createElement('optgroup');
         group.label = label; select.appendChild(group); groups[key] = group;
       }
@@ -530,7 +530,7 @@
         if (![...select.options].some(option => option.value === entry.name)) {
           const option = document.createElement('option');
           option.value = entry.name; option.textContent = phoneRouteLabel(entry.name);
-          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : entry.category === 'recorded' || entry.path.startsWith('recorded/') ? 'recorded' : 'current'].appendChild(option);
+          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : 'current'].appendChild(option);
         }
       }
       const firstRoute = (manifest.routes || [])[0];

@@ -1,0 +1,835 @@
+{
+  "notes": "GTFS coordinates are reused where the normalized stop name matches. LCS with existing trip sequences chooses direction where possible. Historical coordinates are representative points, not verified original direction-specific poles.",
+  "stops": [
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 2,
+      "stop": "札幌ターミナル",
+      "latitude": 43.0622717214804,
+      "longitude": 141.357492454317,
+      "source": "GTFS",
+      "reference": "S010200032500400",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 3,
+      "stop": "北５条西１丁目",
+      "latitude": 43.0678352448279,
+      "longitude": 141.355061760477,
+      "source": "GTFS",
+      "reference": "S010200032600100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 4,
+      "stop": "札幌駅北口",
+      "latitude": 43.0696404344082,
+      "longitude": 141.350791155301,
+      "source": "GTFS",
+      "reference": "S010200008800100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 5,
+      "stop": "北９条西１丁目",
+      "latitude": 43.0727999147146,
+      "longitude": 141.353846266638,
+      "source": "GTFS",
+      "reference": "S010200032800100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 6,
+      "stop": "北１５条東１丁目",
+      "latitude": 43.0795699124469,
+      "longitude": 141.352665360434,
+      "source": "GTFS",
+      "reference": "S010200033600100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 7,
+      "stop": "北１８条東１丁目",
+      "latitude": 43.0830590346827,
+      "longitude": 141.351762415364,
+      "source": "GTFS",
+      "reference": "S010200033700100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 8,
+      "stop": "北２１条東１丁目",
+      "latitude": 43.0869387291018,
+      "longitude": 141.350755289478,
+      "source": "GTFS",
+      "reference": "S010200033800100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 9,
+      "stop": "北２４条東１丁目",
+      "latitude": 43.0899765191293,
+      "longitude": 141.350060697686,
+      "source": "GTFS",
+      "reference": "S010200033900100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 10,
+      "stop": "北２６条東１丁目",
+      "latitude": 43.0939603657866,
+      "longitude": 141.349053575894,
+      "source": "GTFS",
+      "reference": "S010200034000100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 11,
+      "stop": "運輸支局前",
+      "latitude": 43.0972585388932,
+      "longitude": 141.348254828559,
+      "source": "GTFS",
+      "reference": "S010200034100100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 12,
+      "stop": "札幌禎心会病院",
+      "latitude": 43.1008778597939,
+      "longitude": 141.347351913782,
+      "source": "GTFS",
+      "reference": "S010200034300200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 13,
+      "stop": "北３６条東１丁目",
+      "latitude": 43.1040979453554,
+      "longitude": 141.346587922433,
+      "source": "GTFS",
+      "reference": "S010200034400100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 14,
+      "stop": "北３９条東１丁目",
+      "latitude": 43.107465576952,
+      "longitude": 141.345754491385,
+      "source": "GTFS",
+      "reference": "S010200046700100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 15,
+      "stop": "北４２条東１丁目",
+      "latitude": 43.1105901669519,
+      "longitude": 141.344990497559,
+      "source": "GTFS",
+      "reference": "S010200046800100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 16,
+      "stop": "下水道科学館前",
+      "latitude": 43.1151813723167,
+      "longitude": 141.345267799779,
+      "source": "GTFS",
+      "reference": "S010200046900300",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 17,
+      "stop": "北営業所",
+      "latitude": 43.1194774379534,
+      "longitude": 141.344086933188,
+      "source": "GTFS",
+      "reference": "S010200047000200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 18,
+      "stop": "屯田団地橋",
+      "latitude": 43.12588272658,
+      "longitude": 141.345162769804,
+      "source": "GTFS",
+      "reference": "S010200047100100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 19,
+      "stop": "北二番橋",
+      "latitude": 43.1283303043938,
+      "longitude": 141.346169466615,
+      "source": "GTFS",
+      "reference": "S010200080600200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 20,
+      "stop": "さなえ橋",
+      "latitude": 43.1319322609867,
+      "longitude": 141.346967822825,
+      "source": "GTFS",
+      "reference": "S010200080700100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 21,
+      "stop": "北三番橋",
+      "latitude": 43.1346402416948,
+      "longitude": 141.34766207179,
+      "source": "GTFS",
+      "reference": "S010200080800200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 22,
+      "stop": "太平９条１丁目",
+      "latitude": 43.1362893378249,
+      "longitude": 141.347974469653,
+      "source": "GTFS",
+      "reference": "S010200080900200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 23,
+      "stop": "北四番橋",
+      "latitude": 43.1393966073205,
+      "longitude": 141.348703448781,
+      "source": "GTFS",
+      "reference": "S010200081000200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 24,
+      "stop": "北五番橋",
+      "latitude": 43.1442397843089,
+      "longitude": 141.349848999296,
+      "source": "GTFS",
+      "reference": "S010200081100200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 25,
+      "stop": "篠路２条３丁目",
+      "latitude": 43.14487533530841,
+      "longitude": 141.3535253284493,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/1006040/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 26,
+      "stop": "篠路３条４丁目",
+      "latitude": 43.1450905490183,
+      "longitude": 141.358737100584,
+      "source": "GTFS",
+      "reference": "S010200059000100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 27,
+      "stop": "篠路５条４丁目",
+      "latitude": 43.1488141752292,
+      "longitude": 141.359570177939,
+      "source": "GTFS",
+      "reference": "S010200059100100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 28,
+      "stop": "篠路６条４丁目",
+      "latitude": 43.1509407259518,
+      "longitude": 141.360056141894,
+      "source": "GTFS",
+      "reference": "S010200059200100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 29,
+      "stop": "篠路７条６丁目",
+      "latitude": 43.15211976454608,
+      "longitude": 141.36473674790153,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11896/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 30,
+      "stop": "竜雲寺",
+      "latitude": 43.14936985293633,
+      "longitude": 141.3716673201761,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11880/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 31,
+      "stop": "篠路５条９丁目",
+      "latitude": 43.14799947065215,
+      "longitude": 141.37250841955543,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11868/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 32,
+      "stop": "ひまわり通",
+      "latitude": 43.14889825804687,
+      "longitude": 141.37665551651637,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11879/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 33,
+      "stop": "拓北４条１丁目",
+      "latitude": 43.15275908056975,
+      "longitude": 141.37717806972785,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11899/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 34,
+      "stop": "拓北４条２丁目",
+      "latitude": 43.1537221969232,
+      "longitude": 141.37937143590602,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11907/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 35,
+      "stop": "ひまわり団地",
+      "latitude": 43.1563407919931,
+      "longitude": 141.380470641231,
+      "source": "GTFS",
+      "reference": "S010200081900200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 36,
+      "stop": "拓北小学校",
+      "latitude": 43.1591704371004,
+      "longitude": 141.380921836272,
+      "source": "GTFS",
+      "reference": "S010200059800200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 37,
+      "stop": "拓北８条４丁目",
+      "latitude": 43.1591446918256,
+      "longitude": 141.385470055281,
+      "source": "GTFS",
+      "reference": "S010200059900200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 38,
+      "stop": "あいの里２条１丁目",
+      "latitude": 43.16095258753747,
+      "longitude": 141.38672290288403,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11957/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 39,
+      "stop": "あいの里３条１丁目",
+      "latitude": 43.16468504560279,
+      "longitude": 141.3876203816887,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11992/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "28_札幌ターミナル-あいの里４条１丁目.csv",
+      "row": 40,
+      "stop": "あいの里４条１丁目",
+      "latitude": 43.1678157808426,
+      "longitude": 141.386337526473,
+      "source": "GTFS",
+      "reference": "S010200061000100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 2,
+      "stop": "東営業所",
+      "latitude": 43.083234308307,
+      "longitude": 141.403945437728,
+      "source": "GTFS",
+      "reference": "S010200164500100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 3,
+      "stop": "東苗穂２条１丁目",
+      "latitude": 43.086107087314,
+      "longitude": 141.397938628613,
+      "source": "GTFS",
+      "reference": "S010200222500200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 4,
+      "stop": "伏古５条４丁目",
+      "latitude": 43.0871310778437,
+      "longitude": 141.393320929157,
+      "source": "GTFS",
+      "reference": "S010200123000200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 5,
+      "stop": "伏古２条３丁目",
+      "latitude": 43.0838501434582,
+      "longitude": 141.390786759165,
+      "source": "GTFS",
+      "reference": "S010200122900200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 6,
+      "stop": "苗穂神社",
+      "latitude": 43.0797706279513,
+      "longitude": 141.387558368358,
+      "source": "GTFS",
+      "reference": "S010200222100200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 7,
+      "stop": "本町１条３丁目",
+      "latitude": 43.0778957911777,
+      "longitude": 141.386065677243,
+      "source": "GTFS",
+      "reference": "S010200222000200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 8,
+      "stop": "本町１条２丁目",
+      "latitude": 43.0786854803403,
+      "longitude": 141.381552122557,
+      "source": "GTFS",
+      "reference": "S010200222300200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 9,
+      "stop": "北１３条東１５丁目",
+      "latitude": 43.0795012423947,
+      "longitude": 141.377350947387,
+      "source": "GTFS",
+      "reference": "S010200222200200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 10,
+      "stop": "環状通東駅",
+      "latitude": 43.0816536744093,
+      "longitude": 141.374156540175,
+      "source": "GTFS",
+      "reference": "S010200120700400",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 11,
+      "stop": "北１５条東９丁目",
+      "latitude": 43.0806900467437,
+      "longitude": 141.36696967961,
+      "source": "GTFS",
+      "reference": "S010200120600200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 12,
+      "stop": "東区役所前駅",
+      "latitude": 43.0779819607128,
+      "longitude": 141.363949298209,
+      "source": "GTFS",
+      "reference": "S010200120500500",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 13,
+      "stop": "東保健センター",
+      "latitude": 43.0751524404322,
+      "longitude": 141.364470280073,
+      "source": "GTFS",
+      "reference": "S010200120400100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 14,
+      "stop": "北８条東７丁目",
+      "latitude": 43.0726440615042,
+      "longitude": 141.365060673555,
+      "source": "GTFS",
+      "reference": "S010200218300100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 15,
+      "stop": "北８条東５丁目",
+      "latitude": 43.0717238889299,
+      "longitude": 141.360408316965,
+      "source": "GTFS",
+      "reference": "S010200218200100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 16,
+      "stop": "北８条東３丁目",
+      "latitude": 43.0713245279665,
+      "longitude": 141.357457185341,
+      "source": "GTFS",
+      "reference": "S010200218100100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_東営業所-札幌駅北口.csv",
+      "row": 17,
+      "stop": "札幌駅北口",
+      "latitude": 43.0696404344082,
+      "longitude": 141.350791155301,
+      "source": "GTFS",
+      "reference": "S010200008800100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 2,
+      "stop": "宮の沢駅",
+      "latitude": 43.0896615063936,
+      "longitude": 141.2756224914,
+      "source": "GTFS",
+      "reference": "S010200144500100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 3,
+      "stop": "発寒８条１０丁目",
+      "latitude": 43.0948606935324,
+      "longitude": 141.281767603211,
+      "source": "GTFS",
+      "reference": "S010200189800400",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 4,
+      "stop": "発寒１２条５丁目",
+      "latitude": 43.0988360688668,
+      "longitude": 141.287669674297,
+      "source": "GTFS",
+      "reference": "S010200189700100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 5,
+      "stop": "琴似工業高校",
+      "latitude": 43.1021083489722,
+      "longitude": 141.291349716144,
+      "source": "GTFS",
+      "reference": "S010200186100100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 6,
+      "stop": "稲山通",
+      "latitude": 43.0992702036276,
+      "longitude": 141.293537160845,
+      "source": "GTFS",
+      "reference": "S010200186000100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 7,
+      "stop": "八軒６条西１１丁目",
+      "latitude": 43.0959808411896,
+      "longitude": 141.299856226677,
+      "source": "GTFS",
+      "reference": "S010200189600100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 8,
+      "stop": "新川水再生プラザ",
+      "latitude": 43.0952953111465,
+      "longitude": 141.305029424967,
+      "source": "GTFS",
+      "reference": "S010200187000100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 9,
+      "stop": "６号線通",
+      "latitude": 43.1003121963609,
+      "longitude": 141.309855084847,
+      "source": "GTFS",
+      "reference": "S010200187100200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 10,
+      "stop": "新川３条６丁目",
+      "latitude": 43.10227191437801,
+      "longitude": 141.31494758830124,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11322/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 11,
+      "stop": "新川５条５丁目",
+      "latitude": 43.10251283950076,
+      "longitude": 141.31862976125495,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/11328/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 12,
+      "stop": "北３３条西９丁目",
+      "latitude": 43.10020673270519,
+      "longitude": 141.3315399732747,
+      "source": "busmap.info (historical representative point)",
+      "reference": "https://busmap.info/busstop/1006740/",
+      "method": "historical_representative"
+    },
+    {
+      "route": "西６６_宮の沢駅-北３４条駅.csv",
+      "row": 13,
+      "stop": "北３４条駅",
+      "latitude": 43.1004263213203,
+      "longitude": 141.341970474648,
+      "source": "GTFS",
+      "reference": "S010200189200200",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 2,
+      "stop": "札幌駅北口",
+      "latitude": 43.0696404344082,
+      "longitude": 141.350791155301,
+      "source": "GTFS",
+      "reference": "S010200008800100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 3,
+      "stop": "北８条東３丁目",
+      "latitude": 43.0713245279665,
+      "longitude": 141.357457185341,
+      "source": "GTFS",
+      "reference": "S010200218100100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 4,
+      "stop": "北８条東５丁目",
+      "latitude": 43.0717238889299,
+      "longitude": 141.360408316965,
+      "source": "GTFS",
+      "reference": "S010200218200100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 5,
+      "stop": "北８条東７丁目",
+      "latitude": 43.0726440615042,
+      "longitude": 141.365060673555,
+      "source": "GTFS",
+      "reference": "S010200218300100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 6,
+      "stop": "東保健センター",
+      "latitude": 43.0751524404322,
+      "longitude": 141.364470280073,
+      "source": "GTFS",
+      "reference": "S010200120400100",
+      "method": "same_name_existing_stop"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 7,
+      "stop": "東区役所前駅",
+      "latitude": 43.0781295138627,
+      "longitude": 141.364018725784,
+      "source": "GTFS",
+      "reference": "S010200120500400",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 8,
+      "stop": "北１５条東９丁目",
+      "latitude": 43.0808028417572,
+      "longitude": 141.365650332275,
+      "source": "GTFS",
+      "reference": "S010200120600100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 9,
+      "stop": "環状通東駅",
+      "latitude": 43.0826778767946,
+      "longitude": 141.37492028141,
+      "source": "GTFS",
+      "reference": "S010200120700200",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 10,
+      "stop": "北１３条東１５丁目",
+      "latitude": 43.0797442528607,
+      "longitude": 141.376760688827,
+      "source": "GTFS",
+      "reference": "S010200222200100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 11,
+      "stop": "本町１条２丁目",
+      "latitude": 43.0790066121784,
+      "longitude": 141.381170172284,
+      "source": "GTFS",
+      "reference": "S010200222300100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 12,
+      "stop": "本町１条３丁目",
+      "latitude": 43.0776787910194,
+      "longitude": 141.385753235914,
+      "source": "GTFS",
+      "reference": "S010200222000100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 13,
+      "stop": "苗穂神社",
+      "latitude": 43.0798313805762,
+      "longitude": 141.387454207401,
+      "source": "GTFS",
+      "reference": "S010200222100100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 14,
+      "stop": "伏古２条３丁目",
+      "latitude": 43.0839976928955,
+      "longitude": 141.390717307741,
+      "source": "GTFS",
+      "reference": "S010200122900100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 15,
+      "stop": "伏古５条４丁目",
+      "latitude": 43.0869835187188,
+      "longitude": 141.393043189776,
+      "source": "GTFS",
+      "reference": "S010200123000100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 16,
+      "stop": "東苗穂２条１丁目",
+      "latitude": 43.0860289856836,
+      "longitude": 141.39845943621,
+      "source": "GTFS",
+      "reference": "S010200222500100",
+      "method": "existing_trip_sequence"
+    },
+    {
+      "route": "東６４_札幌駅北口-東営業所.csv",
+      "row": 17,
+      "stop": "東営業所",
+      "latitude": 43.0824531443148,
+      "longitude": 141.403667736839,
+      "source": "GTFS",
+      "reference": "S010200164500200",
+      "method": "existing_trip_sequence"
+    }
+  ]
+}

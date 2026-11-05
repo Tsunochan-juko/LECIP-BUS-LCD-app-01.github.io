@@ -1807,18 +1807,18 @@
     },
     {
       "name": "北海道中央バス / 東６４｜東営業所－札幌駅北口（録音）",
-      "path": "recorded/東６４_東営業所-札幌駅北口.csv",
-      "category": "recorded"
+      "path": "archive/東６４_東営業所-札幌駅北口.csv",
+      "category": "archive"
     },
     {
       "name": "北海道中央バス / 西６６｜宮の沢駅－北３４条駅（録音）",
-      "path": "recorded/西６６_宮の沢駅-北３４条駅.csv",
-      "category": "recorded"
+      "path": "archive/西６６_宮の沢駅-北３４条駅.csv",
+      "category": "archive"
     },
     {
       "name": "北海道中央バス / 東６４｜札幌駅北口－東営業所（録音）",
-      "path": "recorded/東６４_札幌駅北口-東営業所.csv",
-      "category": "recorded"
+      "path": "archive/東６４_札幌駅北口-東営業所.csv",
+      "category": "archive"
     }
   ]
 }
