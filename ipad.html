@@ -249,7 +249,7 @@
   </div>
 </div>
 
-<script src="route-csv.js"></script>
+<script src="route-csv.js?v=2.1"></script>
 <script>
   let rosenList = {};      
   let selectedValue = "";  
@@ -495,6 +495,7 @@
     const state = {
       routeName: selectedValue,
       routeData: rosenList[selectedValue],
+      dataFormat: 'renderer-v2',
       mawashi,
       stopRequested: document.getElementById('btn-stop').classList.contains('pushed'),
       doorsOpen: document.getElementById('btn-close').disabled,
@@ -510,6 +511,11 @@
 
   function applyRemoteState(state, writerClientId) {
     if (!state || !Array.isArray(state.routeData)) return;
+    try { state = BusRouteCsv.normalizeState(state); }
+    catch (error) {
+      document.getElementById('connection-status').textContent = '同期データの形式エラー: ' + error.message;
+      return;
+    }
     const routeChanged = selectedValue !== state.routeName;
     const previousMawashi = mawashi;
     for (const [name, value] of [['push_sound',state.audioSettings?.push],['door_buzzer',state.audioSettings?.door]]) {
@@ -529,8 +535,8 @@
       select.appendChild(option);
     }
     select.value = selectedValue;
+    updateDisplay();
     if (routeChanged || previousMawashi !== mawashi) {
-      updateDisplay();
       forceSwitchToScreen1();
     }
     document.getElementById('btn-next').disabled = false;
@@ -871,7 +877,8 @@
         
         const entry = entries?.[fareCount];
         let val = entries ? (entry?.fare ?? '') : (currentData[3 + fareCount] || "");
-        if (entries && val === '' && entry) val = '―'; 
+        if (entries && val === '' && entry) val = '―';
+        if (val !== '' && !/^\d+$/.test(String(val))) val = '―'; 
         if ((!entries || entry?.number === 1) && fareCount === 0 && val !== "") {
           cell.innerHTML = `<div class="abs cell-top flex-center"><span style="font-size: calc(10 * var(--pt-ratio) / var(--base-w) * 100cqw); margin-right:5px; color:#fff;">券なし</span><span class="cell-no">${counter}</span></div><div class="abs cell-bottom flex-center"><span class="cell-val">${val}</span></div>`;
         } else {

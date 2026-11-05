@@ -20,8 +20,7 @@
     if(field!==''||row.length){row.push(field);if(row.some(v=>v!==''))rows.push(row);}
     return rows;
   }
-  function read(text) {
-    const cells=readCells(text);
+  function fromCells(cells) {
     if(!cells.length || !cells[0].includes('形式版'))return {version:1,legacy:cells};
     const header=cells[0];
     for(const key of ['行種別','停留所名','読み仮名'])if(!header.includes(key))throw new Error('CSVに必要な列がありません: '+key);
@@ -31,6 +30,7 @@
     if(routes.length!==1)throw new Error('路線情報は1行必要です');
     return {version:2,route:routes[0],stops:records.filter(row=>row['行種別']==='停留所')};
   }
+  function read(text) { return fromCells(readCells(text)); }
   function toRows(data) {
     if(data.version===1)return data.legacy;
     const rows=[Array(23).fill('')];
@@ -41,5 +41,15 @@
     meta[19]=route['終点読み']||'';meta[20]=route['事業者読み']||'';meta[21]=route['系統読み']||'';meta[22]=route['事業者名']||'';
     rows.push(meta);return rows;
   }
-  window.BusRouteCsv={read,toRows,parse:text=>toRows(read(text))};
+  function normalizeState(state) {
+    const cells = state.routeData;
+    if (!Array.isArray(cells) || !Array.isArray(cells[0]) || !cells[0].includes('形式版')) return state;
+    const parsed = fromCells(cells);
+    const kind = cells[0].indexOf('行種別');
+    const rawIndex = Math.max(0, Number(state.mawashi) || 0) + 1;
+    const before = cells.slice(1, rawIndex).filter(row => row?.[kind] === '停留所').length;
+    const index = cells[rawIndex]?.[kind] === '停留所' ? before : 0;
+    return {...state, routeData:toRows(parsed), mawashi:Math.min(index, Math.max(0,parsed.stops.length-1)), dataFormat:'renderer-v2'};
+  }
+  window.BusRouteCsv={read,toRows,normalizeState,parse:text=>toRows(read(text))};
 })();
