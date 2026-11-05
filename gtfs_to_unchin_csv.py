@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a GTFS Schedule ZIP into this simulator's 16-column route CSVs.
+"""Convert a GTFS Schedule ZIP into this simulator's named-column route CSV v2.
 
 Usage:
     python gtfs_to_unchin_csv.py hokkaido_chuo.zip -o converted --fare 240
@@ -20,6 +20,8 @@ import zipfile
 from collections import defaultdict
 from pathlib import Path
 from typing import Iterable
+
+from route_csv import read_rows, write_rows, compact
 
 
 HEADER = [
@@ -245,6 +247,15 @@ def convert(
             raise ValueError("Required GTFS tables are missing or empty: " + ", ".join(missing))
 
         translations = read_gtfs_table(archive, "translations.txt")
+        agency = read_gtfs_table(archive, "agency.txt")
+        company_by_id = {r.get("agency_id", ""): r.get("agency_name", "") for r in agency}
+        kana_by_id = {}
+        for translation in translations:
+            if (translation.get("table_name") == "stops" and translation.get("field_name") == "stop_name"
+                    and translation.get("language", "").lower() in ("ja-hrkt", "ja-kana")):
+                kana = clean_stop_name(translation.get("translation", ""))
+                kana_by_id[translation.get("record_id", "")] = "".join(chr(ord(c)-0x60) if "ァ" <= c <= "ヶ" else c for c in kana)
+
         stop_translations = translations_for(translations, "stops", "stop_name", language)
         trip_headsigns = translations_for(translations, "trips", "trip_headsign", "ja")
         stops = {row.get("stop_id", ""): row for row in stop_rows if row.get("stop_id")}
@@ -300,8 +311,13 @@ def convert(
             variant = counts_by_filename[filename_base]
             suffix = f"_別経路{variant:02d}" if variant > 1 else ""
             filename = f"{filename_base}{suffix}.csv"
-            with (output_dir / filename).open("w", encoding="utf-8", newline="") as file:
-                csv.writer(file, lineterminator="\n").writerows(rows)
+            company = company_by_id.get(route.get("agency_id", ""), "") or (agency[0].get("agency_name", "") if len(agency) == 1 else "")
+            readings = {compact(stops[sid].get("stop_name", "")): kana_by_id[sid] for sid in _stop_ids if sid in stops and kana_by_id.get(sid)}
+            output_path = output_dir / filename
+            if output_path.exists():
+                previous = read_rows(output_path.read_text(encoding="utf-8-sig"))
+                readings.update({compact(row[0]): row[19] for row in previous[1:-1] if len(row) > 19 and row[19]})
+            write_rows(output_path, rows, company=company, stop_readings=readings, depot="")
             written += 1
     return written
 
@@ -335,8 +351,7 @@ def write_route_manifest(routes_dir: Path) -> None:
     for csv_path in sorted(routes_dir.rglob("*.csv")):
         relative = csv_path.relative_to(routes_dir).as_posix()
         parent = csv_path.parent.relative_to(routes_dir).as_posix()
-        with csv_path.open(encoding="utf-8-sig", newline="") as source:
-            rows = list(csv.reader(source))
+        rows = read_rows(csv_path.read_text(encoding="utf-8-sig"))
         if len(rows) >= 3:
             system = rows[-1][14] if len(rows[-1]) > 14 else ""
             origin = clean_stop_name(rows[1][0] or rows[1][1])

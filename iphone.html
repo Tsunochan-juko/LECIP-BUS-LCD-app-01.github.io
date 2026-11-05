@@ -230,6 +230,7 @@
  </section>
 </main>
 
+<script src="route-csv.js"></script>
 <script>
   let rosenList = {};      
   let selectedValue = "";  
@@ -293,14 +294,15 @@
   const ttsReadingsReady = fetch('tts-readings.json').then(response => {
     if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
     return response.json();
-  }).then(values => { ttsReadings=values; }).catch(error => console.warn(error));
+  }).then(values => { ttsReadings=Object.fromEntries(Object.entries(values).map(([name, reading]) => [compactJapaneseStopName(name), reading])); }).catch(error => console.warn(error));
   function ttsReading(value) {
     const name=String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g,'').trim();
-    return ttsReadings[name] || name;
+    const compactName = compactJapaneseStopName(name);
+    return ttsReadings[compactName] || compactName;
   }
   function makeStopAnnouncement(stopName, data = rosenList[selectedValue] || [], index = mawashi, routeName = selectedValue) {
     const clean = value => String(value || '').replace(/\([^()]*\)|（[^（）]*）|\[[^\[\]]*\]|［[^［］]*］/g, '').trim();
-    const name = ttsReading(clean(stopName));
+    const name = clean(data[index + 1]?.[19]) || ttsReading(clean(stopName));
     if (!name) return '';
     const normal = 'つぎは、'+name+'、'+name+'、おおりのかたは、おしらせねがいます。';
     if (data.length > 2 && index >= data.length - 3) {
@@ -308,11 +310,12 @@
     }
     if (index === 1) {
       const metadata = data[data.length - 1] || [];
-      const company = String(routeName).split(' / ')[0];
-      const operator = company.includes('中央') ? 'ちゅうおうばす' : (company.includes('バス') ? ttsReading(company) : 'とうばす');
+      const company = metadata[22] || String(routeName).split(' / ')[0];
+      const operator = metadata[20] || (company.includes('中央') ? 'ちゅうおうばす' : (company.includes('バス') ? ttsReading(company) : 'とうばす'));
       let system = String(metadata[14] || routeName).normalize('NFKC').match(/([東西南北]?[A-Za-z]?\d+(?:[-・]\d+)?)/)?.[1] || '';
       system=system.replace(/^[東西南北]/, value => ({'東':'ひがし','西':'にし','南':'みなみ','北':'きた'}[value]));
-      const destination = ttsReading(data[data.length - 2]?.[1] || data[data.length - 2]?.[0] || metadata[1]);
+      system = metadata[21] || system;
+      const destination = metadata[19] || data[data.length - 2]?.[19] || ttsReading(data[data.length - 2]?.[1] || data[data.length - 2]?.[0] || metadata[1]);
       return 'いつも、'+operator+'をごりよういただきまして、ありがとうございます。このばすは、'+(system ? system+'ばん、' : '')+destination+'ゆきでございます。'+normal;
     }
     return normal;
@@ -441,23 +444,8 @@
   }
 
   // CSV読み込み処理 (ファイル複数選択とフォルダ選択の両方に対応)
-  function parseCsvLine(line) {
-    const fields = [];
-    let value = '', quoted = false;
-    for (let i = 0; i < line.length; i++) {
-      const character = line[i];
-      if (character === '"') {
-        if (quoted && line[i + 1] === '"') { value += '"'; i++; }
-        else quoted = !quoted;
-      } else if (character === ',' && !quoted) {
-        fields.push(value); value = '';
-      } else value += character;
-    }
-    fields.push(value);
-    return fields;
-  }
   function parseCsvText(text) {
-    return text.replace(/^\uFEFF/, '').split(/\r\n|\n/).filter(line => line.trim() !== '').map(parseCsvLine);
+    return BusRouteCsv.parse(text);
   }
 
 
@@ -592,6 +580,17 @@
     }
 
   }
+  function compactJapaneseStopName(value) {
+    return String(value || '').replace(/[\s\u3000]+/g, '');
+  }
+  function formatJapaneseStopName(value) {
+    const name = compactJapaneseStopName(value);
+    const chars = Array.from(name);
+    if (chars.length === 2) return chars.join('　');
+    if (chars.length >= 3 && chars.length <= 5) return chars.join(' ');
+    return name;
+  }
+
   function updateDisplay() {
     if (!selectedValue || !rosenList[selectedValue]) return;
     const data = rosenList[selectedValue];
@@ -602,7 +601,8 @@
     updateRouteMap();
 
     // ★Python版の size_adjustment 処理を移植（文字数が11以上の時は縮小）
-    const currentLength = (currentData[1] || "").length;
+    const displayedStopName = formatJapaneseStopName(currentData[1] || currentData[0]);
+    const currentLength = Array.from(displayedStopName).length;
     let textSize = 35;
     if (currentLength >= 11) {
         textSize = Math.floor(35 * 11 / currentLength);
@@ -610,7 +610,7 @@
     const fontSizeCalc = `calc(${textSize} * var(--pt-ratio) / var(--base-w) * 100cqw)`;
     
     const mainDestText = document.getElementById('main-dest-text');
-    mainDestText.textContent = currentData[1] || ""; 
+    mainDestText.textContent = displayedStopName; 
     mainDestText.style.fontSize = fontSizeCalc;
 
     const sc2NextStopJa = document.getElementById('sc2-next-stop-ja');
@@ -622,7 +622,7 @@
     });
     const initialLength=Array.from(initialSummary).length;
     const initialTextSize=initialLength>=12 ? Math.floor(35*12/initialLength+.3) : 35;
-    sc2NextStopJa.textContent = mawashi===0 ? initialSummary : (currentData[1] || '');
+    sc2NextStopJa.textContent = mawashi===0 ? initialSummary : displayedStopName;
     sc2NextStopJa.style.fontSize = mawashi===0 ? `calc(${initialTextSize} * var(--pt-ratio) / var(--base-w) * 100cqw)` : fontSizeCalc;
     
     const nextBoxText = document.getElementById('next-box-text');
@@ -652,7 +652,7 @@
       }
 
       if (targetRow) {
-        document.getElementById(`sc3-ja-${n_text}`).textContent = targetRow[0] || "";
+        document.getElementById(`sc3-ja-${n_text}`).textContent = compactJapaneseStopName(targetRow[0] || targetRow[1]);
         document.getElementById(`sc3-en-${n_text}`).textContent = targetRow[2] || "";
       } else {
         document.getElementById(`sc3-ja-${n_text}`).textContent = "";
