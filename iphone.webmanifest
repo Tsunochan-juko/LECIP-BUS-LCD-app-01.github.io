@@ -3,7 +3,7 @@
   "name": "バス 操作盤",
   "short_name": "操作盤",
   "lang": "ja",
-  "start_url": "./iphone.html",
+  "start_url": "./iphone.html?v=22",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
