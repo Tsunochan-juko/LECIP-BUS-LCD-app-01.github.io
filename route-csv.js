@@ -2,6 +2,10 @@
 (() => {
   const stopFields = {'停留所名':0,'表示名':1,'英語名':2,'広告':9,'始発':10,'予備1':11,'予備2':12,'予備3':13,'放送ファイル':14,'停留所番号':15,'緯度':16,'経度':17,'読み仮名':19};
   for(let n=1;n<=6;n++) stopFields['整理券'+n]=n+2;
+  function formatEnglishStopName(value) {
+    return String(value || '').replace(/(\d+)\s+Jo\s+(\d+)\s+Chome\b/gi, '$1-$2')
+      .replace(/\s+(?:Jo|Chome)\b/gi, '').trim();
+  }
   function readCells(text) {
     const rows=[]; let row=[],field='',quoted=false;
     text=String(text).replace(/^\uFEFF/,'');
@@ -51,5 +55,5 @@
     const index = cells[rawIndex]?.[kind] === '停留所' ? before : 0;
     return {...state, routeData:toRows(parsed), mawashi:Math.min(index, Math.max(0,parsed.stops.length-1)), dataFormat:'renderer-v2'};
   }
-  window.BusRouteCsv={read,toRows,normalizeState,parse:text=>toRows(read(text))};
+  window.BusRouteCsv={read,toRows,normalizeState,formatEnglishStopName,parse:text=>toRows(read(text))};
 })();

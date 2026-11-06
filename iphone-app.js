@@ -57,7 +57,7 @@ let rosenList = {};
   });
 
   let ttsReadings = {};
-  const ttsReadingsReady = fetch('tts-readings.json?v=22', { cache: 'no-store' }).then(response => {
+  const ttsReadingsReady = fetch('tts-readings.json?v=24', { cache: 'no-store' }).then(response => {
     if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
     return response.json();
   }).then(values => { ttsReadings=Object.fromEntries(Object.entries(values).map(([name, reading]) => [compactJapaneseStopName(name), reading])); }).catch(error => console.warn(error));
@@ -267,7 +267,7 @@ let rosenList = {};
     const relativePath = bundledRoutePaths.get(routeName);
     if (!relativePath) return null;
     const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
-    const response = await fetch(csvUrl + '?v=22', { cache: 'no-store' });
+    const response = await fetch(csvUrl + '?v=24', { cache: 'no-store' });
     if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
     const text = await response.text();
     rosenList[routeName] = parseCsvText(text);
@@ -276,12 +276,12 @@ let rosenList = {};
 
   async function loadBundledRoutes() {
     try {
-      const manifestResponse = await fetch('routes/index.json?v=22', { cache: 'no-store' });
+      const manifestResponse = await fetch('routes/index.json?v=24', { cache: 'no-store' });
       if (!manifestResponse.ok) return;
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');
       const groups = {};
-      for (const [key, label] of [['current', '現行路線'], ['archive', '過去路線アーカイブ']]) {
+      for (const [key, label] of [['current', '現行路線'], ['fictional', '架空路線'], ['archive', '過去路線アーカイブ']]) {
         const group = document.createElement('optgroup');
         group.label = label; select.appendChild(group); groups[key] = group;
       }
@@ -290,7 +290,7 @@ let rosenList = {};
         if (![...select.options].some(option => option.value === entry.name)) {
           const option = document.createElement('option');
           option.value = entry.name; option.textContent = phoneRouteLabel(entry.name);
-          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : 'current'].appendChild(option);
+          groups[entry.category === 'archive' || entry.path.startsWith('archive/') ? 'archive' : entry.category === 'fictional' || entry.path.startsWith('fictional/') ? 'fictional' : 'current'].appendChild(option);
         }
       }
       const firstRoute = (manifest.routes || [])[0];
@@ -410,7 +410,7 @@ let rosenList = {};
 
     renderFareGrid(currentData);
 
-    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 
+    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : BusRouteCsv.formatEnglishStopName(currentData[2]); 
 
     for (let n_text = 0; n_text < 4; n_text++) {
       let targetRow = null;
@@ -426,7 +426,7 @@ let rosenList = {};
 
       if (targetRow) {
         document.getElementById(`sc3-ja-${n_text}`).textContent = compactJapaneseStopName(targetRow[0] || targetRow[1]);
-        document.getElementById(`sc3-en-${n_text}`).textContent = targetRow[2] || "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = BusRouteCsv.formatEnglishStopName(targetRow[2]);
       } else {
         document.getElementById(`sc3-ja-${n_text}`).textContent = "";
         document.getElementById(`sc3-en-${n_text}`).textContent = "";

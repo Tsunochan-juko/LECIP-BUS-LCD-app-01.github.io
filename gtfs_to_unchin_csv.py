@@ -365,9 +365,9 @@ def write_route_manifest(routes_dir: Path) -> None:
         previous_name = previous_names.get(relative, "")
         company = previous_name.split(" / ")[0] if " / " in previous_name else (parent if parent != "." else "")
         route_name = f"{company} / {label}" if company else label
-        if relative.startswith(("archive/", "recorded/")):
+        if relative.startswith(("archive/", "recorded/", "fictional/")):
             entry = dict(previous_by_path.get(relative, {}))
-            entry.update({"name": entry.get("name", route_name), "path": relative, "category": "archive" if relative.startswith("archive/") else "recorded"})
+            entry.update({"name": entry.get("name", route_name), "path": relative, "category": "archive" if relative.startswith("archive/") else "fictional" if relative.startswith("fictional/") else "recorded"})
             entries.append(entry)
         else:
             entries.append({"name": route_name, "path": relative})

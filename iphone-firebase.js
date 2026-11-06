@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
   import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-  import { firebaseConfig } from './firebase-config.js?v=22';
+  import { firebaseConfig } from './firebase-config.js?v=24';
 
   const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_')
     && firebaseConfig.databaseURL && !firebaseConfig.databaseURL.startsWith('PASTE_');

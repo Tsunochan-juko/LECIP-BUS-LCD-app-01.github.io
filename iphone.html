@@ -58,6 +58,9 @@
   .sc2-next-stop-en { top: calc(245 / var(--base-h) * 100%); left: 50%; transform: translate(-50%, -50%); font-size: calc(18 * var(--pt-ratio) / var(--base-w) * 100cqw); color: #A2B8B8; line-height: 1; white-space: nowrap; }
 
   /* Screen 3 */
+  #screen3 > .yellow-bar { z-index: 0; }
+  #screen3 > .sc3-bg-img { z-index: 1; }
+  #screen3 > div:not(.yellow-bar) { z-index: 2; }
   .sc3-bg-img { top: calc(36 / var(--base-h) * 100%); left: 0; width: 100%; height: calc(290 / var(--base-h) * 100%); object-fit: fill; clip-path: inset(0 0 calc(36 / 290 * 100%) 0); }
   /* Tkinterのanchor="nw"と同じ挙動にするため、余計なmarginを消して純粋に座標配置 */
   .sc3-via-ja { left: calc(125 / var(--base-w) * 100%); font-size: calc(17 * var(--pt-ratio) / var(--base-w) * 100cqw); line-height: 1; white-space: nowrap; transform-origin: top left; }
@@ -142,8 +145,8 @@
   #lcd-blackout { position:absolute; inset:0; z-index:1000; background:#000; pointer-events:none; }
 </style>
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
-<script src="vendor/leaflet/leaflet.js?v=22"></script>
-<link rel="manifest" href="iphone.webmanifest?v=22">
+<script src="vendor/leaflet/leaflet.js?v=24"></script>
+<link rel="manifest" href="iphone.webmanifest?v=24">
 <link rel="apple-touch-icon" sizes="512x512" href="app-icons/home-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -187,6 +190,7 @@
   <div id="screen3" class="screen">
     <div class="abs top-bar-blue"></div>
     <div class="abs top-bar-text">経由地 ｜ VIA</div>
+    <div class="abs yellow-bar" style="top: calc(256 / var(--base-h) * 100%);"></div>
     <img src="data/screen3.png" class="abs sc3-bg-img" alt="" onerror="this.style.display='none'">
     
     <div class="abs sc3-via-ja" id="sc3-ja-0" style="top: calc(73 / var(--base-h) * 100%);"></div>
@@ -197,7 +201,6 @@
     <div class="abs sc3-via-en" id="sc3-en-2" style="top: calc(204 / var(--base-h) * 100%);"></div>
     <div class="abs sc3-dest-ja" id="sc3-ja-3" style="top: calc(228 / var(--base-h) * 100%);">-- 終点 --</div>
     <div class="abs sc3-dest-en" id="sc3-en-3" style="top: calc(262 / var(--base-h) * 100%);">-- Destination --</div>
-    <div class="abs yellow-bar" style="top: calc(256 / var(--base-h) * 100%);"></div>
     <div class="abs gray-bar"></div>
   </div>
 
@@ -230,9 +233,9 @@
  </section>
 </main>
 
-<script src="route-csv.js?v=22"></script>
-<script src="iphone-app.js?v=22"></script>
-<script type="module" src="iphone-firebase.js?v=22"></script>
+<script src="route-csv.js?v=24"></script>
+<script src="iphone-app.js?v=24"></script>
+<script type="module" src="iphone-firebase.js?v=24"></script>
 </body>
 </html>
 

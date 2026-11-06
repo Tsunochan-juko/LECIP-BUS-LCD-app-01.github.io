@@ -19,6 +19,13 @@ def value(row, index):
 def compact(name):
     return re.sub(r"[\s　]+", "", name or "")
 
+def format_english_stop_name(value):
+    text = str(value or "")
+    text = re.sub(r"(\d+)\s+Jo\s+(\d+)\s+Chome\b", r"\1-\2", text, flags=re.I)
+    text = re.sub(r"\s+(?:Jo|Chome)\b", "", text, flags=re.I)
+    return text.strip()
+
+
 def read_rows(text):
     raw = list(csv.reader(io.StringIO(text.lstrip("\ufeff"))))
     raw = [r for r in raw if any(r)]
@@ -73,5 +80,5 @@ def write_rows(path, rows, readings=None, company="", stop_readings=None, depot=
         writer.writeheader();writer.writerow(route)
         for row in rows[1:-1]:
             record = {key:value(row,index) for key,index in STOP_FIELDS.items()}
-            record.update({"形式版":"2","行種別":"停留所","読み仮名":reading(row)})
+            record.update({"形式版":"2","行種別":"停留所","読み仮名":reading(row), "英語名":format_english_stop_name(value(row,2))})
             writer.writerow(record)

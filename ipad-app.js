@@ -184,7 +184,7 @@ let rosenList = {};
   ttsVoiceSelect.addEventListener('change', () => localStorage.setItem('bus-display-tts-voice', ttsVoiceSelect.value));
 
   let ttsReadings = {};
-  const ttsReadingsReady = fetch('tts-readings.json?v=22', { cache: 'no-store' }).then(response => {
+  const ttsReadingsReady = fetch('tts-readings.json?v=24', { cache: 'no-store' }).then(response => {
     if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
     return response.json();
   }).then(values => { ttsReadings=Object.fromEntries(Object.entries(values).map(([name, reading]) => [compactJapaneseStopName(name), reading])); }).catch(error => console.warn(error));
@@ -308,8 +308,7 @@ let rosenList = {};
       if (state.eventName === 'open') {
         cancelDoorAnnouncement();
         forceSwitchToScreen1();
-        const sound=document.querySelector('input[name="door_buzzer"]:checked').value;
-        if(audioUnlocked) playSound(sound==='1'?'data/taihei_door_open.wav':'data/buzzer'+sound+'.wav');
+        playDoorOpeningSound();
       }
       if (state.eventName === 'next') {
         cancelDoorAnnouncement();
@@ -423,6 +422,18 @@ let rosenList = {};
       speechSynthesis.resume();
       speechSynthesis.speak(utterance);
     });
+  }
+  async function playDoorOpeningSound() {
+    cancelDoorAnnouncement();
+    const generation = doorAnnouncementGeneration;
+    const sound = document.querySelector('input[name="door_buzzer"]:checked').value;
+    try {
+      await playDoorClip(sound === '1' ? 'data/taihei_door_open.wav' : 'data/buzzer' + sound + '.wav', generation);
+    } catch (error) {
+      document.getElementById('audio-retry').textContent = 'ドア開け音エラー: ' + error.message;
+      showAudioRetry();
+      console.error(error);
+    }
   }
   async function playDoorClosingAnnouncement() {
     cancelDoorAnnouncement();
@@ -555,7 +566,7 @@ let rosenList = {};
     const relativePath = bundledRoutePaths.get(routeName);
     if (!relativePath) return null;
     const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
-    const response = await fetch(csvUrl + '?v=22', { cache: 'no-store' });
+    const response = await fetch(csvUrl + '?v=24', { cache: 'no-store' });
     if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
     const text = await response.text();
     rosenList[routeName] = parseCsvText(text);
@@ -564,7 +575,7 @@ let rosenList = {};
 
   async function loadBundledRoutes() {
     try {
-      const manifestResponse = await fetch('routes/index.json?v=22', { cache: 'no-store' });
+      const manifestResponse = await fetch('routes/index.json?v=24', { cache: 'no-store' });
       if (!manifestResponse.ok) return;
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');
@@ -692,7 +703,7 @@ let rosenList = {};
 
     renderFareGrid(currentData);
 
-    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : (currentData[2] || ''); 
+    document.getElementById('sc2-next-stop-en').textContent = mawashi===0 ? '' : BusRouteCsv.formatEnglishStopName(currentData[2]); 
 
     for (let n_text = 0; n_text < 4; n_text++) {
       let targetRow = null;
@@ -708,7 +719,7 @@ let rosenList = {};
 
       if (targetRow) {
         document.getElementById(`sc3-ja-${n_text}`).textContent = compactJapaneseStopName(targetRow[0] || targetRow[1]);
-        document.getElementById(`sc3-en-${n_text}`).textContent = targetRow[2] || "";
+        document.getElementById(`sc3-en-${n_text}`).textContent = BusRouteCsv.formatEnglishStopName(targetRow[2]);
       } else {
         document.getElementById(`sc3-ja-${n_text}`).textContent = "";
         document.getElementById(`sc3-en-${n_text}`).textContent = "";
@@ -924,9 +935,7 @@ let rosenList = {};
     forceSwitchToScreen1(); 
     clearTimeout(screenTimer); 
     
-    const doorBuzzerVal = document.querySelector('input[name="door_buzzer"]:checked').value;
-    if (doorBuzzerVal === "1") playSound(`data/taihei_door_open.wav`);
-    else playSound(`data/buzzer${doorBuzzerVal}.wav`);
+    playDoorOpeningSound();
     publishState('open');
   });
 
