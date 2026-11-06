@@ -22,3 +22,11 @@ Firebase Web API key はブラウザー向け識別子で、秘密情報では�
 
 `iphone.html` と `ipad.html` はそれぞれ独立した画面です。どちらの端末も同じ GitHub Pages サイト内の別URLを使います。
 
+
+## 自作路線の保存
+
+編集画面 `route-editor.html?v=25` も同じFirebase Authenticationを使います。
+自作路線は `privateBus/state/customRoutes/{routeId}` に保存されます。運行データと同じUID制限を継承し、未ログインでは読み書きしません。
+現在の同期に使用しているルールが `privateBus/state` に対して自分のUIDを許可し、`state` と `writerClientId` の存在を検証する形式なら、同じ許可内で動作します。
+保存はトランザクションを使用し、同階層の運行状態を保持します。通常の運行状態送信も部分更新に変更しています。
+接続・保存が拒否された場合は編集画面のエラーに表示します。現行のログイン・同期が成立しているUIDのルールを使用してください。

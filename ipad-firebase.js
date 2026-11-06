@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
   import { getAuth, signInWithEmailAndPassword, signOut, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-  import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-  import { firebaseConfig } from './firebase-config.js?v=24';
+  import { getDatabase, ref, onValue, update } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+  import { firebaseConfig } from './firebase-config.js?v=25';
 
   const configured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('PASTE_')
     && firebaseConfig.databaseURL && !firebaseConfig.databaseURL.startsWith('PASTE_');
@@ -43,7 +43,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
             const value = snapshot.val();
             if (value) callback(value.state, value.writerClientId);
           });
-          window.firebaseBus.send = state => set(stateRef, { state, writerClientId: clientId });
+          window.firebaseBus.send = state => update(stateRef, { state, writerClientId: clientId });
           return Promise.resolve();
         },
         send: () => Promise.reject(new Error('ログインして同期を開始してください'))

@@ -184,7 +184,7 @@ let rosenList = {};
   ttsVoiceSelect.addEventListener('change', () => localStorage.setItem('bus-display-tts-voice', ttsVoiceSelect.value));
 
   let ttsReadings = {};
-  const ttsReadingsReady = fetch('tts-readings.json?v=24', { cache: 'no-store' }).then(response => {
+  const ttsReadingsReady = fetch('tts-readings.json?v=25', { cache: 'no-store' }).then(response => {
     if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
     return response.json();
   }).then(values => { ttsReadings=Object.fromEntries(Object.entries(values).map(([name, reading]) => [compactJapaneseStopName(name), reading])); }).catch(error => console.warn(error));
@@ -566,7 +566,7 @@ let rosenList = {};
     const relativePath = bundledRoutePaths.get(routeName);
     if (!relativePath) return null;
     const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
-    const response = await fetch(csvUrl + '?v=24', { cache: 'no-store' });
+    const response = await fetch(csvUrl + '?v=25', { cache: 'no-store' });
     if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
     const text = await response.text();
     rosenList[routeName] = parseCsvText(text);
@@ -575,7 +575,7 @@ let rosenList = {};
 
   async function loadBundledRoutes() {
     try {
-      const manifestResponse = await fetch('routes/index.json?v=24', { cache: 'no-store' });
+      const manifestResponse = await fetch('routes/index.json?v=25', { cache: 'no-store' });
       if (!manifestResponse.ok) return;
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');

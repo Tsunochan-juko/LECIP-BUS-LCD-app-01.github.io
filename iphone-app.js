@@ -57,7 +57,7 @@ let rosenList = {};
   });
 
   let ttsReadings = {};
-  const ttsReadingsReady = fetch('tts-readings.json?v=24', { cache: 'no-store' }).then(response => {
+  const ttsReadingsReady = fetch('tts-readings.json?v=25', { cache: 'no-store' }).then(response => {
     if (!response.ok) throw new Error('読み仮名辞書を読み込めません');
     return response.json();
   }).then(values => { ttsReadings=Object.fromEntries(Object.entries(values).map(([name, reading]) => [compactJapaneseStopName(name), reading])); }).catch(error => console.warn(error));
@@ -263,11 +263,15 @@ let rosenList = {};
   }
   const bundledRoutePaths = new Map();
   async function loadBundledRoute(routeName) {
+    if (routeName.startsWith('custom:')) {
+      if (!rosenList[routeName]) throw new Error('自作路線を取得できません。ログインを確認してください');
+      return rosenList[routeName];
+    }
 
     const relativePath = bundledRoutePaths.get(routeName);
     if (!relativePath) return null;
     const csvUrl = 'routes/' + relativePath.split('/').map(encodeURIComponent).join('/');
-    const response = await fetch(csvUrl + '?v=24', { cache: 'no-store' });
+    const response = await fetch(csvUrl + '?v=25', { cache: 'no-store' });
     if (!response.ok) throw new Error(`路線CSVを読み込めません: ${relativePath}`);
     const text = await response.text();
     rosenList[routeName] = parseCsvText(text);
@@ -276,12 +280,12 @@ let rosenList = {};
 
   async function loadBundledRoutes() {
     try {
-      const manifestResponse = await fetch('routes/index.json?v=24', { cache: 'no-store' });
+      const manifestResponse = await fetch('routes/index.json?v=25', { cache: 'no-store' });
       if (!manifestResponse.ok) return;
       const manifest = await manifestResponse.json();
       const select = document.getElementById('rosen-select');
       const groups = {};
-      for (const [key, label] of [['current', '現行路線'], ['fictional', '架空路線'], ['archive', '過去路線アーカイブ']]) {
+      for (const [key, label] of [['current', '現行路線'], ['fictional', '自作路線（CSV）'], ['archive', '過去路線アーカイブ']]) {
         const group = document.createElement('optgroup');
         group.label = label; select.appendChild(group); groups[key] = group;
       }
@@ -325,6 +329,26 @@ let rosenList = {};
     }
   });
 
+
+  const cloudRouteKeys = new Set();
+  window.addEventListener('custom-routes-changed', event => {
+    const select=document.getElementById('rosen-select');
+    let group=document.getElementById('custom-cloud-group');
+    if(!group){group=document.createElement('optgroup');group.id='custom-cloud-group';group.label='自作路線';select.appendChild(group);}
+    const current=selectedValue;group.replaceChildren();
+    for(const key of cloudRouteKeys)delete rosenList[key];cloudRouteKeys.clear();
+    for(const record of event.detail||[]){
+      const key='custom:'+record.id;
+      try{rosenList[key]=BusRouteCsv.parse(record.csv);}catch(error){console.warn(error);continue;}
+      cloudRouteKeys.add(key);const option=document.createElement('option');option.value=key;option.textContent=phoneRouteLabel(record.name);group.appendChild(option);
+    }
+    if(current.startsWith('custom:')){
+      if(cloudRouteKeys.has(current)){
+        selectedValue=current;select.value=current;mawashi=Math.max(0,Math.min(mawashi,rosenList[current].length-3));updateDisplay();publishState();
+      }else{selectedValue='';select.value='';document.getElementById('btn-next').disabled=true;document.getElementById('btn-back').disabled=true;}
+    }else select.value=current;
+  });
+  window.addEventListener('custom-routes-error',event=>{document.getElementById('connection-status').textContent='自作路線の接続エラー: '+event.detail;});
   // 描画更新処理
   function renderFareGrid(currentData) {
     const grid = document.getElementById('fare-grid');
